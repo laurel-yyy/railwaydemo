@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: amd64/mysql:5.7.36
+    container_name: mysql_railwaydemo
+    platform: linux/amd64
+    environment:
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3390:3306"
+    restart: unless-stopped
