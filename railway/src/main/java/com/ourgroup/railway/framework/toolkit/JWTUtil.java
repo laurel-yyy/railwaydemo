@@ -12,7 +12,7 @@ import javax.crypto.SecretKey;
 public class JWTUtil {
 
     // 秘钥，通常应该保存在配置文件中
-    private static final String SECRET_KEY = "your-secret-key";
+    private static final String SECRET_KEY = "your-secret-key-with-at-least-32-characters-long";
 
     // 过期时间（以毫秒为单位）
     private static final long EXPIRATION_TIME = 3600000L; // 1小时

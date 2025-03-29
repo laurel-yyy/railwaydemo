@@ -5,7 +5,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-@MapperScan("com.ourgroup.railway.services.user_service.dao") // Scans the specified package for MyBatis mapper interfaces
+@MapperScan("com.ourgroup.railway.mapper") // Scans the specified package for MyBatis mapper interfaces
 public class RailwayApplication {
 
 	public static void main(String[] args) {

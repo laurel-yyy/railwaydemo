@@ -1,4 +1,4 @@
-package com.ourgroup.railway.services.user_service.dto.resp;
+package com.ourgroup.railway.model.dto.resp;
 
 public class UserRegisterRespDTO {
 

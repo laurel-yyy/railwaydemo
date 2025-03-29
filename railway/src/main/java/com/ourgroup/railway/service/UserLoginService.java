@@ -1,9 +1,9 @@
-package com.ourgroup.railway.services.user_service.service;
+package com.ourgroup.railway.service;
 
-import com.ourgroup.railway.services.user_service.dto.req.UserLoginReqDTO;
-import com.ourgroup.railway.services.user_service.dto.req.UserRegisterReqDTO;
-import com.ourgroup.railway.services.user_service.dto.resp.UserLoginRespDTO;
-import com.ourgroup.railway.services.user_service.dto.resp.UserRegisterRespDTO;
+import com.ourgroup.railway.model.dto.req.UserLoginReqDTO;
+import com.ourgroup.railway.model.dto.req.UserRegisterReqDTO;
+import com.ourgroup.railway.model.dto.resp.UserLoginRespDTO;
+import com.ourgroup.railway.model.dto.resp.UserRegisterRespDTO;
 
 /**
  * 用户登录和注册服务接口

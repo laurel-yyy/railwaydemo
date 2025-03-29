@@ -1,4 +1,4 @@
-package com.ourgroup.railway.services.user_service.dto.req;
+package com.ourgroup.railway.model.dto.req;
 
 public class UserLoginReqDTO {
 
