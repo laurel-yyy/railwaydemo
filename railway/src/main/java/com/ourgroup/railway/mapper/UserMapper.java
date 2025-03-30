@@ -18,7 +18,7 @@ public interface UserMapper {
     List<UserDO> selectAll();
 
     @Insert("INSERT INTO t_user (username, password, real_name) VALUES (#{username}, #{password}, #{realName})")
-    @Options(useGeneratedKeys = true, keyProperty = "id")
+    // @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(UserDO user);
 
     @Select("SELECT * FROM t_user WHERE username = #{username}")

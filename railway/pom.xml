@@ -79,7 +79,34 @@
 			<version>0.4</version>
 		</dependency>
 
+		<dependency>
+			<groupId>org.apache.shardingsphere</groupId>
+			<artifactId>shardingsphere-jdbc-core-spring-boot-starter</artifactId>
+			<version>5.2.1</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>snakeyaml</artifactId>
+					<groupId>org.yaml</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>cosid-core</artifactId>
+					<groupId>me.ahoo.cosid</groupId>
+				</exclusion>
+			</exclusions>	
+		</dependency>
 
+		<dependency>
+			<groupId>org.yaml</groupId>
+			<artifactId>snakeyaml</artifactId>
+			<version>1.33</version> 
+		</dependency>
+		<dependency>
+			<groupId>me.ahoo.cosid</groupId>
+			<artifactId>cosid-core</artifactId>
+			<version>1.19.3</version>  
+		</dependency>
+
+	
 	</dependencies>
 
 	<build>
