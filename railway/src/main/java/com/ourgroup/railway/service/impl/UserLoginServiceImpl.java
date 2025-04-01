@@ -60,6 +60,7 @@ public class UserLoginServiceImpl implements UserLoginService {
 
         // 创建新用户并插入到数据库
         UserDO newUser = new UserDO();
+        newUser.setId(System.currentTimeMillis());
         newUser.setUsername(requestParam.getUsername());
         newUser.setPassword(hashedPassword);
         newUser.setRealName(requestParam.getRealName());
