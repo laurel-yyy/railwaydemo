@@ -40,16 +40,16 @@ public class UserLoginServiceImpl implements UserLoginService {
             throw new RuntimeException("账号或密码错误");
         }
             
-        String accessToken = JWTUtil.generateAccessToken(userDO.getUsername(), userDO.getRealName());
+        String accessToken = JWTUtil.generateAccessToken(String.valueOf(userDO.getId()));
 
         // 返回响应结果
         return new UserLoginRespDTO(userDO.getUsername(), userDO.getRealName(), accessToken);
     }
 
-    // 注册功能
+    // Login Feature
     @Override
     public UserRegisterRespDTO register(UserRegisterReqDTO requestParam) {
-        // 检查用户名是否已存在
+        // check if the name already exists
         List<UserDO> existingUsers = userMapper.findByUsername(requestParam.getUsername());
         
         if (existingUsers != null && !existingUsers.isEmpty()) {
@@ -58,15 +58,15 @@ public class UserLoginServiceImpl implements UserLoginService {
 
         String hashedPassword = BCrypt.hashpw(requestParam.getPassword(), BCrypt.gensalt(12));
 
-        // 创建新用户并插入到数据库
+        // create new user
         UserDO newUser = new UserDO();
-        newUser.setId(System.currentTimeMillis());
+        // newUser.setId(System.currentTimeMillis());
         newUser.setUsername(requestParam.getUsername());
         newUser.setPassword(hashedPassword);
         newUser.setRealName(requestParam.getRealName());
 
         try {
-            userMapper.insert(newUser);
+            userMapper.insert(newUser); // here the shardingsphere will use snowflake to produce id for user, and put it in sql
         } catch (DuplicateKeyException e) {
             throw new RuntimeException("注册失败，数据库错误");
         }

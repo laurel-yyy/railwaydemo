@@ -20,9 +20,9 @@ public class UserLoginController {
      * 用户登录
      */
     @PostMapping("/login")
-    public Result<String> login(@RequestBody UserLoginReqDTO requestParam) {
-        userLoginService.login(requestParam);
-        return Result.success();
+    public Result<UserLoginRespDTO> login(@RequestBody UserLoginReqDTO requestParam) {
+        UserLoginRespDTO userLogin = userLoginService.login(requestParam);
+        return Result.success(userLogin);
     }
 
     /**

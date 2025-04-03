@@ -67,4 +67,7 @@ spring:
             props:
               worker-id: 1
               center-id: 1
+logging:
+  level:
+    org.apache.shardingsphere: DEBUG
 

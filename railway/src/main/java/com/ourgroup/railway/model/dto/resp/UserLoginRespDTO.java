@@ -1,5 +1,7 @@
 package com.ourgroup.railway.model.dto.resp;
+import lombok.Data; // Lombok annotation to generate getters, setters, and other methods
 
+@Data
 public class UserLoginRespDTO {
 
     private String username;
