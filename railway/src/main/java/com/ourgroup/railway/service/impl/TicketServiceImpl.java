@@ -1,0 +1,389 @@
+package com.ourgroup.railway.service.impl;
+
+import org.springframework.util.CollectionUtils;
+import org.apache.shardingsphere.distsql.parser.autogen.KernelDistSQLStatementParser.UserContext;
+import org.checkerframework.checker.units.qual.A;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.ourgroup.railway.framework.cache.DistributedCache;
+import com.ourgroup.railway.model.dto.req.PurchaseTicketReqDTO;
+import com.ourgroup.railway.model.dto.req.TicketPageQueryReqDTO;
+import com.ourgroup.railway.model.dto.resp.TicketOrderDetailRespDTO;
+import com.ourgroup.railway.model.dto.resp.TicketPageQueryRespDTO;
+import com.ourgroup.railway.model.dto.resp.TicketPurchaseRespDTO;
+import com.ourgroup.railway.model.dto.resp.TrainPurchaseTicketRespDTO;
+import com.ourgroup.railway.service.TicketService;
+import com.ourgroup.railway.service.cache.SeatMarginCacheLoader;
+import com.ourgroup.railway.model.dao.TicketDO;
+import com.ourgroup.railway.model.dao.TrainDO;
+import com.ourgroup.railway.model.dao.TrainStationPriceDO;
+import com.ourgroup.railway.model.dao.TrainStationRelationDO;
+import com.ourgroup.railway.model.dto.domain.SeatClassDTO;
+import com.ourgroup.railway.model.dto.domain.TicketListDTO;
+import com.ourgroup.railway.framework.constant.RedisKeyConstant;
+import com.ourgroup.railway.framework.result.Result;
+import com.ourgroup.railway.mapper.TrainMapper;
+import com.ourgroup.railway.mapper.TrainStationPriceMapper;
+import com.ourgroup.railway.mapper.TrainStationRelationMapper;
+import com.ourgroup.railway.framework.constant.RailwayConstant;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import lombok.RequiredArgsConstructor;
+
+import com.alibaba.fastjson2.JSON;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.protobuf.ServiceException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.ConfigurableEnvironment;
+
+
+@Service
+@RequiredArgsConstructor
+public class TicketServiceImpl implements TicketService{
+
+    private static final Logger logger = LoggerFactory.getLogger(TicketServiceImpl.class);
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private final TrainStationRelationMapper trainStationRelationMapper;
+    private final TrainMapper trainMapper;
+    private final TrainStationPriceMapper trainStationPriceMapper;
+
+    private final DistributedCache distributedCache;
+    private final RedissonClient redissonClient;
+    private final SeatMarginCacheLoader seatMarginCacheLoader;
+
+    private final ConfigurableEnvironment environment;
+
+
+    @Value("${framework.cache.redis.prefix}")
+    private String cahceRedisPrefix;
+    
+    // private TrainSeatTypeSelector trainSeatTypeSelector;
+
+    @Override
+    public TicketPageQueryRespDTO pageListQueryTicket(TicketPageQueryReqDTO requestParam) {
+        StringRedisTemplate stringRedisTemplate = (StringRedisTemplate) distributedCache.getInstance();
+        
+        List<TicketListDTO> ticketList = new ArrayList<>();
+        String trainStationCacheKey  = String.format(RedisKeyConstant.TRAIN_STATIONS, requestParam.getFromStation(), requestParam.getToStation());
+        Map<Object, Object> trainStationMap = stringRedisTemplate.opsForHash().entries(trainStationCacheKey);
+
+        if(CollectionUtils.isEmpty(trainStationMap)) {
+            RLock lock = redissonClient.getLock(RedisKeyConstant.LOCK_TRAIN_STATIONS);
+            lock.lock();
+
+            try {
+                trainStationMap = stringRedisTemplate.opsForHash().entries(trainStationCacheKey);
+                if(CollectionUtils.isEmpty(trainStationMap)) {
+                    List<TrainStationRelationDO> trainStationRelationList = trainStationRelationMapper.selectByDepartureAndArrival(requestParam.getFromStation(), requestParam.getToStation());
+
+                    for(TrainStationRelationDO relation : trainStationRelationList) {
+                        TrainDO trainDO = distributedCache.safeGet(
+                                            RedisKeyConstant.TRAIN_INFO + relation.getTrainId(), 
+                                            TrainDO.class,
+                                            () -> trainMapper.selectById(relation.getTrainId()),
+                                            RailwayConstant.ADVANCE_TICKET_DAY,
+                                            TimeUnit.DAYS);
+
+                        TicketListDTO result = new TicketListDTO();
+                        
+                        result.setTrainId(String.valueOf(trainDO.getId()));
+                        result.setTrainNumber(trainDO.getTrainNumber());
+                        result.setDepartureTime(formatTime(relation.getDepartureTime(), "HH:mm"));
+                        result.setArrivalTime(formatTime(relation.getArrivalTime(), "HH:mm"));
+                        result.setDuration(calculateHourDifference(relation.getDepartureTime(), relation.getArrivalTime()));
+                        result.setDeparture(relation.getDeparture());
+                        result.setArrival(relation.getArrival());
+                        result.setDepartureFlag(relation.getDepartureFlag());
+                        result.setArrivalFlag(relation.getArrivalFlag());
+
+                        long daysArrived = calculateDaysArrived(relation.getDepartureTime(), relation.getArrivalTime());
+                        result.setDaysArrived((int) daysArrived);
+
+                        Date now = new Date();
+                        result.setSaleStatus(now.after(trainDO.getSaleTime()) ? 0 : 1);
+                        result.setSaleTime(formatTime(trainDO.getSaleTime(), "MM-dd HH:mm"));
+
+                        ticketList.add(result);
+
+                        try {
+                            String cacheKey = String.format("%s_%s_%s", 
+                            trainDO.getId(), relation.getDeparture(), relation.getArrival());
+                            trainStationMap.put(cacheKey, objectMapper.writeValueAsString(result));
+                        } catch (JsonProcessingException e) {
+                            logger.error("Failed to serialize ticket info", e);
+                        }
+                    }
+
+                    if(!trainStationMap.isEmpty()) {
+                        stringRedisTemplate.opsForHash().putAll(trainStationCacheKey, trainStationMap);
+                        stringRedisTemplate.expire(trainStationCacheKey, RailwayConstant.ADVANCE_TICKET_DAY, TimeUnit.DAYS);
+                    }
+                }
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        if (ticketList.isEmpty() && !trainStationMap.isEmpty()) {
+            ticketList = trainStationMap.values().stream()
+                .map(value -> {
+                    try {
+                        return objectMapper.readValue((String) value, TicketListDTO.class);
+                    } catch (Exception e) {
+                        logger.error("Failed to deserialize ticket info", e);
+                        return null;
+                    }
+                })
+                .filter(ticket -> ticket != null)
+                .collect(Collectors.toList());
+        }
+
+        ticketList.sort(Comparator.comparing(TicketListDTO::getDepartureTime));
+
+        // 查询每个列车的座位和票价信息
+    for (TicketListDTO ticket : ticketList) {
+        // 从缓存获取票价信息
+        String trainStationPriceKey = String.format(RedisKeyConstant.TRAIN_STATION_PRICE, 
+                ticket.getTrainId(), ticket.getDeparture(), ticket.getArrival());
+        
+        String trainStationPriceStr = distributedCache.safeGet(
+                trainStationPriceKey,
+                String.class,
+                () -> {
+                    // 缓存未命中时查询数据库
+                    List<TrainStationPriceDO> priceList = trainStationPriceMapper.selectByTrainAndStations(
+                            Long.parseLong(ticket.getTrainId()), 
+                            ticket.getDeparture(), 
+                            ticket.getArrival());
+                    
+                    try {
+                        return objectMapper.writeValueAsString(priceList);
+                    } catch (JsonProcessingException e) {
+                        logger.error("Failed to serialize price list for train: {}", ticket.getTrainId(), e);
+                        return "[]";
+                    }
+                },
+                RailwayConstant.ADVANCE_TICKET_DAY,
+                TimeUnit.DAYS
+        );
+        
+        // 解析票价信息
+        List<TrainStationPriceDO> priceList;
+        try {
+            priceList = objectMapper.readValue(trainStationPriceStr,
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, TrainStationPriceDO.class));
+        } catch (Exception e) {
+            logger.error("Failed to deserialize price list for train: {}", ticket.getTrainId(), e);
+            priceList = Collections.emptyList();
+        }
+        
+        // 构建座位类型信息
+        List<SeatClassDTO> seatClassList = new ArrayList<>();
+        for (TrainStationPriceDO price : priceList) {
+            String seatType = String.valueOf(price.getSeatType());
+            String keySuffix = String.join("_", ticket.getTrainId(), price.getDeparture(), price.getArrival());
+            
+            // 查询余票
+            Object quantityObj = stringRedisTemplate.opsForHash().get(
+                    RedisKeyConstant.TRAIN_STATION_REMAINING_TICKET + keySuffix, seatType);
+            
+            // 解析余票数量
+            int quantity = Optional.ofNullable(quantityObj)
+                    .map(Object::toString)
+                    .map(Integer::parseInt)
+                    .orElseGet(() -> {
+                        // 缓存未命中，使用座位缓存加载器加载
+                        Map<String, String> seatMarginMap = seatMarginCacheLoader.load(
+                                ticket.getTrainId(), 
+                                seatType, 
+                                price.getDeparture(), 
+                                price.getArrival());
+                        
+                        return Optional.ofNullable(seatMarginMap.get(seatType))
+                                .map(Integer::parseInt)
+                                .orElse(0);
+                    });
+            
+            // 构建座位类型DTO，价格单位转换（分->元）
+            BigDecimal priceValue = new BigDecimal(price.getPrice())
+                    .divide(new BigDecimal("100"), 1, RoundingMode.HALF_UP);
+            
+            SeatClassDTO seatClassDTO = new SeatClassDTO();
+            seatClassDTO.setType(price.getSeatType());
+            seatClassDTO.setQuantity(quantity);
+            seatClassDTO.setPrice(priceValue);
+            seatClassList.add(seatClassDTO);
+        }
+        
+        // 设置座位类型列表
+        ticket.setSeatClassList(seatClassList);
+    }
+
+    // 构建并返回最终响应结果
+    return TicketPageQueryRespDTO.builder()
+            .trainList(ticketList)
+            .departureStationList(buildDepartureStationList(ticketList))
+            .arrivalStationList(buildArrivalStationList(ticketList))
+            .seatClassTypeList(buildSeatClassList(ticketList))
+            .build();        
+    }
+
+
+    // public TicketPurchaseRespDTO purchaseTicket(PurchaseTicketReqDTO requestParam){
+
+    //     String lockKey = environment.resolvePlaceholders(String.format(RedisKeyConstant.LOCK_PURCHASE_TICKETS, requestParam.getTrainId()));
+    //     RLock lock = redissonClient.getLock(lockKey);
+    //     lock.lock();
+    //     try {
+    //         return ticketService.executePurchaseTickets(requestParam);
+    //     } finally {
+    //         lock.unlock();
+    //     }  
+    // }
+    
+    // @Override
+    // @Transactional(rollbackFor = Throwable.class)
+    // public TicketPurchaseRespDTO executePurchaseTickets(PurchaseTicketReqDTO requestParam) {
+    //     List<TicketOrderDetailRespDTO> ticketOrderDetailResults = new ArrayList<>();
+    //     String trainId = requestParam.getTrainId();
+    //     TrainDO trainDO = distributedCache.safeGet(
+    //             RedisKeyConstant.TRAIN_INFO + trainId,
+    //             TrainDO.class,
+    //             () -> trainMapper.selectById(Long.parseLong(trainId)),
+    //             RailwayConstant.ADVANCE_TICKET_DAY,
+    //             TimeUnit.DAYS);
+
+    //     //美好的消息队列从这里开始
+    //     TrainPurchaseTicketRespDTO trainPurchaseTicketResults = trainSeatTypeSelector.select(requestParam);
+    //     List<TicketDO> ticketDOList = trainPurchaseTicketResults.stream()
+    //             .map(each -> TicketDO.builder()
+    //                     .username(UserContext.getUsername())
+    //                     .trainId(Long.parseLong(requestParam.getTrainId()))
+    //                     .carriageNumber(each.getCarriageNumber())
+    //                     .seatNumber(each.getSeatNumber())
+    //                     .passengerId(each.getPassengerId())
+    //                     .ticketStatus(TicketStatusEnum.UNPAID.getCode())
+    //                     .build())
+    //             .toList();
+    //     saveBatch(ticketDOList);
+    //     Result<String> ticketOrderResult;
+        
+    //     //自己加油吧自己加油吧自己加油吧自己加油吧
+    //     //祝你好运
+    //     //我不干了 再看一眼就要爆炸 
+    //     //不干了睡大觉
+    //     //我要去睡大觉
+    //     //睡...大...
+
+    //     return new TicketPurchaseRespDTO(ticketOrderResult.getData(), ticketOrderDetailResults);
+    // }
+
+    private String formatTime(Date date, String pattern) {
+        if (date == null) {
+            return "";
+        }
+        SimpleDateFormat sdf = new SimpleDateFormat(pattern);
+        return sdf.format(date);
+    }
+
+    private static String calculateHourDifference(Date startTime, Date endTime) {
+        if (startTime == null || endTime == null) {
+            return "";
+        }
+
+        long diffMillis = endTime.getTime() - startTime.getTime();
+        if (diffMillis < 0) {
+            return "";  
+        }
+
+        long hours = diffMillis / (60 * 60 * 1000);
+        long minutes = (diffMillis % (60 * 60 * 1000)) / (60 * 1000);
+        
+        StringBuilder duration = new StringBuilder();
+        if (hours > 0) {
+            duration.append(hours).append("h");
+        }
+        if (minutes > 0 || hours == 0) {
+            duration.append(minutes).append("min");
+        }
+        
+        return duration.toString();
+    }
+    
+    private int calculateDaysArrived(Date departureTime, Date arrivalTime) {
+        if (departureTime == null || arrivalTime == null) {
+            return 0;
+        }
+        
+        // 创建日历实例
+        Calendar depCal = Calendar.getInstance();
+        depCal.setTime(departureTime);
+        
+        Calendar arrCal = Calendar.getInstance();
+        arrCal.setTime(arrivalTime);
+        
+        // 获取日期部分（年、月、日）
+        int depYear = depCal.get(Calendar.YEAR);
+        int depMonth = depCal.get(Calendar.MONTH);
+        int depDay = depCal.get(Calendar.DAY_OF_MONTH);
+        
+        int arrYear = arrCal.get(Calendar.YEAR);
+        int arrMonth = arrCal.get(Calendar.MONTH);
+        int arrDay = arrCal.get(Calendar.DAY_OF_MONTH);
+        
+        // 重置时间部分，只保留日期
+        depCal.clear();
+        depCal.set(depYear, depMonth, depDay);
+        
+        arrCal.clear();
+        arrCal.set(arrYear, arrMonth, arrDay);
+        
+        // 计算日期差（毫秒）
+        long diffMillis = arrCal.getTimeInMillis() - depCal.getTimeInMillis();
+        
+        // 转换为天数
+        return (int)(diffMillis / (24 * 60 * 60 * 1000));
+    }
+
+    private List<String> buildDepartureStationList(List<TicketListDTO> seatResults) {
+        return seatResults.stream().map(TicketListDTO::getDeparture).distinct().collect(Collectors.toList());
+    }
+
+    private List<String> buildArrivalStationList(List<TicketListDTO> seatResults) {
+        return seatResults.stream().map(TicketListDTO::getArrival).distinct().collect(Collectors.toList());
+    }
+
+    private List<Integer> buildSeatClassList(List<TicketListDTO> seatResults) {
+        Set<Integer> resultSeatClassList = new HashSet<>();
+        for (TicketListDTO each : seatResults) {
+            for (SeatClassDTO item : each.getSeatClassList()) {
+                resultSeatClassList.add(item.getType());
+            }
+        }
+        return resultSeatClassList.stream().toList();
+    }
+}

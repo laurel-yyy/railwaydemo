@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ourgroup.railway.mapper.SeatMapper">
+<update id="batchUpdateSeatStatus">
+    UPDATE t_seat
+    SET seat_status = 
+    <foreach collection="list" item="item" separator=" " open="CASE" close="END">
+        WHEN (train_id = #{item.trainId} AND carriage_number = #{item.carriageNumber}
+        AND start_station = #{item.startStation} AND end_station = #{item.endStation}
+        AND seat_number = #{item.seatNumber}) THEN #{item.seatStatus}
+    </foreach>
+    WHERE (train_id, carriage_number, start_station, end_station, seat_number) IN
+    <foreach collection="list" item="item" separator="," open="(" close=")">
+        (#{item.trainId}, #{item.carriageNumber}, #{item.startStation}, #{item.endStation}, #{item.seatNumber})
+    </foreach>
+</update>
+</mapper>
