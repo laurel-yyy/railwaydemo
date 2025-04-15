@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ourgroup.railway.mapper.OrderItemPassengerMapper">
+    <!-- Result map for OrderItemPassenger entity -->
+    <resultMap id="orderItemPassengerResultMap" type="com.ourgroup.railway.model.dao.OrderItemPassengerDO">
+        <id property="id" column="id"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="orderSn" column="order_sn"/>
+        <result property="idType" column="id_type"/>
+        <result property="idCard" column="id_card"/>
+    </resultMap>
+    
+    <!-- Insert a new order item passenger -->
+    <insert id="insert" parameterType="com.ourgroup.railway.model.dao.OrderItemPassengerDO" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_order_item_passenger (
+            create_time, update_time, order_sn, id_type, id_card
+        ) VALUES (
+            #{createTime}, #{updateTime}, #{orderSn}, #{idType}, #{idCard}
+        )
+    </insert>
+    
+    <!-- Batch insert order item passengers -->
+    <insert id="batchInsert" parameterType="java.util.List" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_order_item_passenger (
+            create_time, update_time, order_sn, id_type, id_card
+        ) VALUES 
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.createTime}, #{item.updateTime}, #{item.orderSn}, #{item.idType}, #{item.idCard}
+            )
+        </foreach>
+    </insert>
+    
+    <!-- Update an existing order item passenger -->
+    <update id="update" parameterType="com.ourgroup.railway.model.dao.OrderItemPassengerDO">
+        UPDATE t_order_item_passenger
+        SET update_time = #{updateTime},
+            order_sn = #{orderSn},
+            id_type = #{idType},
+            id_card = #{idCard}
+        WHERE id = #{id}
+    </update>
+    
+    <!-- Delete an order item passenger by ID -->
+    <delete id="deleteById" parameterType="java.lang.Long">
+        DELETE FROM t_order_item_passenger WHERE id = #{id}
+    </delete>
+    
+    <!-- Find an order item passenger by ID -->
+    <select id="findById" parameterType="java.lang.Long" resultMap="orderItemPassengerResultMap">
+        SELECT * FROM t_order_item_passenger WHERE id = #{id}
+    </select>
+    
+    <!-- Find order item passengers by order number -->
+    <select id="findByOrderSn" parameterType="java.lang.String" resultMap="orderItemPassengerResultMap">
+        SELECT * FROM t_order_item_passenger WHERE order_sn = #{orderSn}
+    </select>
+    
+    <!-- Find order item passengers by ID card -->
+    <select id="findByIdCard" parameterType="java.lang.String" resultMap="orderItemPassengerResultMap">
+        SELECT * FROM t_order_item_passenger WHERE id_card = #{idCard}
+    </select>
+    
+    <!-- Find order item passenger by order number and ID card -->
+    <select id="findByOrderSnAndIdCard" resultMap="orderItemPassengerResultMap">
+        SELECT * FROM t_order_item_passenger 
+        WHERE order_sn = #{orderSn} 
+        AND id_card = #{idCard}
+        LIMIT 1
+    </select>
+    
+    <!-- Delete by order number -->
+    <delete id="deleteByOrderSn" parameterType="java.lang.String">
+        DELETE FROM t_order_item_passenger WHERE order_sn = #{orderSn}
+    </delete>
+    
+    <!-- Count by ID card -->
+    <select id="countByIdCard" parameterType="java.lang.String" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM t_order_item_passenger WHERE id_card = #{idCard}
+    </select>
+</mapper>

@@ -11,11 +11,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ourgroup.railway.framework.cache.DistributedCache;
 import com.ourgroup.railway.model.dto.req.PurchaseTicketReqDTO;
+import com.ourgroup.railway.model.dto.req.TicketOrderCreateReqDTO;
 import com.ourgroup.railway.model.dto.req.TicketPageQueryReqDTO;
 import com.ourgroup.railway.model.dto.resp.TicketOrderDetailRespDTO;
 import com.ourgroup.railway.model.dto.resp.TicketPageQueryRespDTO;
 import com.ourgroup.railway.model.dto.resp.TicketPurchaseRespDTO;
 import com.ourgroup.railway.model.dto.resp.TrainPurchaseTicketRespDTO;
+import com.ourgroup.railway.service.select.TrainSeatTypeSelector;
+import com.ourgroup.railway.model.constants.enums.TicketStatusEnum;
+import com.ourgroup.railway.service.OrderService;
 import com.ourgroup.railway.service.TicketService;
 import com.ourgroup.railway.service.cache.SeatMarginCacheLoader;
 import com.ourgroup.railway.model.dao.TicketDO;
@@ -75,13 +79,17 @@ public class TicketServiceImpl implements TicketService{
     private final RedissonClient redissonClient;
     private final SeatMarginCacheLoader seatMarginCacheLoader;
 
+    private final OrderService orderService;
+    private final TicketMapper ticketMapper;
+
+
     private final ConfigurableEnvironment environment;
 
 
     @Value("${framework.cache.redis.prefix}")
     private String cahceRedisPrefix;
     
-    // private TrainSeatTypeSelector trainSeatTypeSelector;
+    private TrainSeatTypeSelector trainSeatTypeSelector;
 
     @Override
     public TicketPageQueryRespDTO pageListQueryTicket(TicketPageQueryReqDTO requestParam) {
@@ -250,6 +258,71 @@ public class TicketServiceImpl implements TicketService{
             .arrivalStationList(buildArrivalStationList(ticketList))
             .seatClassTypeList(buildSeatClassList(ticketList))
             .build();        
+    }
+   
+    @Override
+    @Transactional(rollbackFor = Throwable.class)
+    public TicketPurchaseRespDTO executePurchaseTickets(PurchaseTicketReqDTO requestParam) {
+        List<TicketOrderDetailRespDTO> ticketOrderDetailResults = new ArrayList<>();
+        String trainId = requestParam.getTrainId();
+        
+        // Get train information from cache or database
+        TrainDO trainDO = distributedCache.safeGet(
+                RedisKeyConstant.TRAIN_INFO + trainId,
+                TrainDO.class,
+                () -> trainMapper.selectById(Long.parseLong(trainId)),
+                RailwayConstant.ADVANCE_TICKET_DAY,
+                TimeUnit.DAYS);
+        
+        if (trainDO == null) {
+            throw new ServiceException("Train not found with ID: " + trainId);
+        }
+        
+        // Select seats for this ticket purchase
+        List<TrainPurchaseTicketRespDTO> selectedSeats = trainSeatTypeSelector.select(requestParam);
+        
+        if (CollectionUtils.isEmpty(selectedSeats)) {
+            throw new ServiceException("No available seats for the selected train");
+        }
+        
+        // Transform selected seats into ticket records
+        List<TicketDO> ticketDOList = new ArrayList<>();
+        for (TrainPurchaseTicketRespDTO seat : selectedSeats) {
+            TicketDO ticketDO = TicketDO.builder()
+                    .username(requestParam.getUsername())
+                    .trainId(Long.parseLong(requestParam.getTrainId()))
+                    .carriageNumber(seat.getCarriageNumber())
+                    .seatNumber(seat.getSeatNumber())
+                    .passengerId(seat.getPassengerId())
+                    .ticketStatus(TicketStatusEnum.UNPAID.getCode())
+                    .createTime(new Date())
+                    .updateTime(new Date())
+                    .build();
+            
+            ticketDOList.add(ticketDO);
+            
+            // Insert ticket record to database
+            ticketMapper.insert(ticketDO);
+        }
+        
+        // Create order request
+        TicketOrderCreateReqDTO orderCreateReq = buildOrderCreateRequest(requestParam, trainDO, selectedSeats);
+        
+        // Create order in OrderService
+        String orderSn = orderService.createTicketOrder(orderCreateReq);
+        
+        if (orderSn == null || orderSn.isEmpty()) {
+            throw new ServiceException("Failed to create order");
+        }
+        
+        // Query the created order details
+        TicketOrderDetailRespDTO orderDetail = orderService.queryTicketOrderByOrderSn(orderSn);
+        if (orderDetail != null) {
+            ticketOrderDetailResults.add(orderDetail);
+        }
+        
+        // Return purchase result with order number and details
+        return new TicketPurchaseRespDTO(orderSn, ticketOrderDetailResults);
     }
 
 

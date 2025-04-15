@@ -1,23 +1,39 @@
-package com.ourgroup.railway.model.dto.resp;
+package com.ourgroup.railway.model.dao;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.util.Date;
 
 /**
- * Ticket order passenger detail response DTO
+ * Order item database entity
  */
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TicketOrderPassengerDetailRespDTO {
+@Builder
+public class OrderItemDO {
 
     /**
      * id
      */
     private Long id;
+    
+    /**
+     * create time
+     */
+    private Date createTime;
+    
+    /**
+     * update time
+     */
+    private Date updateTime;
+    
+    /**
+     * order number
+     */
+    private String orderSn;
 
     /**
      * user id
@@ -30,14 +46,19 @@ public class TicketOrderPassengerDetailRespDTO {
     private String username;
 
     /**
-     * seat type
+     * train id
      */
-    private Integer seatType;
+    private Long trainId;
 
     /**
      * carriage number
      */
     private String carriageNumber;
+
+    /**
+     * seat type
+     */
+    private Integer seatType;
 
     /**
      * seat number
@@ -60,9 +81,14 @@ public class TicketOrderPassengerDetailRespDTO {
     private String idCard;
 
     /**
-     * ticket type 0: adult 1: child 2: student 3: disabled military
+     * phone
      */
-    private Integer ticketType;
+    private String phone;
+
+    /**
+     * order status
+     */
+    private Integer status;
 
     /**
      * amount
@@ -70,12 +96,7 @@ public class TicketOrderPassengerDetailRespDTO {
     private Integer amount;
 
     /**
-     * status
+     * ticket type
      */
-    private Integer status;
-
-    /**
-     * status name
-     */
-    private String statusName;
+    private Integer ticketType;
 }

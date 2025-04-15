@@ -7,62 +7,112 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * 车票订单详情返回参数
+ * Ticket order detail response DTO
  */
 @Data
 public class TicketOrderDetailRespDTO {
 
     /**
-     * 订单号
+     * id
+     */
+    private Long id;
+
+    /**
+     * order number
      */
     private String orderSn;
 
     /**
-     * 列车 ID
+     * user id
+     */
+    private String userId;
+
+    /**
+     * username
+     */
+    private String username;
+    
+    /**
+     * train id
      */
     private Long trainId;
 
     /**
-     * 出发站点
+     * departure station
      */
     private String departure;
 
     /**
-     * 到达站点
+     * arrival station
      */
     private String arrival;
 
     /**
-     * 乘车日期
+     * riding date
      */
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date ridingDate;
 
     /**
-     * 订票日期
+     * order time
      */
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date orderTime;
 
     /**
-     * 列车车次
+     * train number
      */
     private String trainNumber;
 
     /**
-     * 出发时间
+     * departure time
      */
     @JsonFormat(pattern = "HH:mm", timezone = "GMT+8")
     private Date departureTime;
 
     /**
-     * 到达时间
+     * arrival time
      */
     @JsonFormat(pattern = "HH:mm", timezone = "GMT+8")
     private Date arrivalTime;
+    
+    /**
+     * order source
+     */
+    private Integer source;
+    
+    /**
+     * order status
+     */
+    private Integer status;
+    
+    /**
+     * payment type
+     */
+    private Integer payType;
+    
+    /**
+     * payment time
+     */
+    private Date payTime;
+    
+    /**
+     * create time
+     */
+    private Date createTime;
+    
+    /**
+     * update time
+     */
+    private Date updateTime;
+    
+    /**
+     * total amount
+     */
+    private Integer totalAmount;
 
     /**
-     * 乘车人订单详情
+     * passenger details
      */
     private List<TicketOrderPassengerDetailRespDTO> passengerDetails;
 }

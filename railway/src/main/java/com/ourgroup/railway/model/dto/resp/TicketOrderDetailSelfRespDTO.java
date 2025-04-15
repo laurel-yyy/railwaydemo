@@ -1,33 +1,54 @@
 package com.ourgroup.railway.model.dto.resp;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 /**
- * Ticket order passenger detail response DTO
+ * Self ticket order detail response
  */
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TicketOrderPassengerDetailRespDTO {
+@Builder
+public class TicketOrderDetailSelfRespDTO {
 
     /**
-     * id
+     * departure station
      */
-    private Long id;
+    private String departure;
 
     /**
-     * user id
+     * arrival station
      */
-    private String userId;
+    private String arrival;
 
     /**
-     * username
+     * riding date
      */
-    private String username;
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
+    private Date ridingDate;
+
+    /**
+     * train number
+     */
+    private String trainNumber;
+
+    /**
+     * departure time
+     */
+    @JsonFormat(pattern = "HH:mm", timezone = "GMT+8")
+    private Date departureTime;
+
+    /**
+     * arrival time
+     */
+    @JsonFormat(pattern = "HH:mm", timezone = "GMT+8")
+    private Date arrivalTime;
 
     /**
      * seat type
@@ -50,16 +71,6 @@ public class TicketOrderPassengerDetailRespDTO {
     private String realName;
 
     /**
-     * id type
-     */
-    private Integer idType;
-
-    /**
-     * id card
-     */
-    private String idCard;
-
-    /**
      * ticket type 0: adult 1: child 2: student 3: disabled military
      */
     private Integer ticketType;
@@ -68,14 +79,4 @@ public class TicketOrderPassengerDetailRespDTO {
      * amount
      */
     private Integer amount;
-
-    /**
-     * status
-     */
-    private Integer status;
-
-    /**
-     * status name
-     */
-    private String statusName;
 }
