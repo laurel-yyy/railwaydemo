@@ -30,10 +30,10 @@ public class TicketController {
         return Result.success(ticketPageQuery);
     }
 
-    // @PostMapping("/api/ticket/purchase")
-    // public Result<TicketPurchaseRespDTO> purchaseTicket(PurchaseTicketReqDTO requestParam) {
-    //     TicketPurchaseRespDTO ticketPurchase = ticketService.purchaseTicket(requestParam);
-    //     return Result.success(ticketPurchase);
-    // }
+    @PostMapping("/api/ticket/purchase")
+    public Result<TicketPurchaseRespDTO> purchaseTicket(PurchaseTicketReqDTO requestParam) {
+        TicketPurchaseRespDTO ticketPurchase = ticketService.purchaseTicket(requestParam);
+        return Result.success(ticketPurchase);
+    }
 
 }

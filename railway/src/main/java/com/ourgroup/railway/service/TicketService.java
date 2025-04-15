@@ -8,7 +8,7 @@ import com.ourgroup.railway.model.dto.resp.TicketPurchaseRespDTO;
 public interface TicketService {
     TicketPageQueryRespDTO pageListQueryTicket(TicketPageQueryReqDTO requestParam);
 
-    // TicketPurchaseRespDTO purchaseTicket(PurchaseTicketReqDTO requestParam);
+    TicketPurchaseRespDTO purchaseTicket(PurchaseTicketReqDTO requestParam);
 
-    // TicketPurchaseRespDTO executePurchaseTickets(PurchaseTicketReqDTO requestParam);
+    TicketPurchaseRespDTO executePurchaseTickets(PurchaseTicketReqDTO requestParam);
 } 

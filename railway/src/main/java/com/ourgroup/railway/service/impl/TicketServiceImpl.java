@@ -326,17 +326,17 @@ public class TicketServiceImpl implements TicketService{
     }
 
 
-    // public TicketPurchaseRespDTO purchaseTicket(PurchaseTicketReqDTO requestParam){
+    public TicketPurchaseRespDTO purchaseTicket(PurchaseTicketReqDTO requestParam){
 
-    //     String lockKey = environment.resolvePlaceholders(String.format(RedisKeyConstant.LOCK_PURCHASE_TICKETS, requestParam.getTrainId()));
-    //     RLock lock = redissonClient.getLock(lockKey);
-    //     lock.lock();
-    //     try {
-    //         return ticketService.executePurchaseTickets(requestParam);
-    //     } finally {
-    //         lock.unlock();
-    //     }  
-    // }
+        String lockKey = environment.resolvePlaceholders(String.format(RedisKeyConstant.LOCK_PURCHASE_TICKETS, requestParam.getTrainId()));
+        RLock lock = redissonClient.getLock(lockKey);
+        lock.lock();
+        try {
+            return executePurchaseTickets(requestParam);
+        } finally {
+            lock.unlock();
+        }  
+    }
     
     // @Override
     // @Transactional(rollbackFor = Throwable.class)

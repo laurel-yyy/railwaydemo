@@ -18,9 +18,8 @@ import com.ourgroup.railway.model.dao.SeatDO;
 import com.ourgroup.railway.model.dao.TrainStationPriceDO;
 import com.ourgroup.railway.model.dto.req.PurchaseTicketReqDTO;
 import com.ourgroup.railway.model.dto.resp.TrainPurchaseTicketRespDTO;
-import com.ourgroup.railway.service.PassengerService;
 import com.ourgroup.railway.service.SeatService;
-// import com.ourgroup.railway.model.dto.PassengerDTO;
+import com.ourgroup.railway.service.handler.TrainPurchaseTicketHandler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,16 +36,18 @@ public class TrainSeatTypeSelector {
     private final SeatService seatService;
     private final TrainStationPriceMapper trainStationPriceMapper;
     private final DistributedCache distributedCache;
-    private final PassengerService passengerService; // Passenger service dependency
+
+    private TrainPurchaseTicketHandler trainPurchaseTicketHandler;
 
     /**
      * Select and allocate seats for ticket purchase
      * 
      * @param requestParam Purchase ticket request parameters
      * @return List of allocated seats with details
+     * @throws Exception 
      */
     @Transactional(rollbackFor = Exception.class)
-    public List<TrainPurchaseTicketRespDTO> select(PurchaseTicketReqDTO requestParam) {
+    public List<TrainPurchaseTicketRespDTO> select(PurchaseTicketReqDTO requestParam) throws Exception {
         List<TrainPurchaseTicketRespDTO> result = new ArrayList<>();
         String trainId = requestParam.getTrainId();
         String departure = requestParam.getDeparture();
@@ -58,13 +59,6 @@ public class TrainSeatTypeSelector {
             log.error("Passenger ID cannot be null");
             return result;
         }
-        
-        // Get passenger details by ID
-        // PassengerDTO passenger = passengerService.getPassengerById(passengerId);
-        // if (passenger == null) {
-        //     log.error("Passenger not found with ID: {}", passengerId);
-        //     return result;
-        // }
         
         StringRedisTemplate stringRedisTemplate = (StringRedisTemplate) distributedCache.getInstance();
         
@@ -94,44 +88,18 @@ public class TrainSeatTypeSelector {
         }
         
         // Find an available seat
-        SeatDO availableSeat = findAvailableSeat(Long.parseLong(trainId), seatType, departure, arrival);
-        if (availableSeat == null) {
-            log.error("Failed to find available seat for train: {}, departure: {}, arrival: {}, seatType: {}", 
-                      trainId, departure, arrival, seatType);
-            throw new RuntimeException("Failed to allocate seat");
-        }
-        
-        // Create seats to lock
+
+        TrainPurchaseTicketRespDTO seatToLock = trainPurchaseTicketHandler.executeResp(requestParam);
         List<TrainPurchaseTicketRespDTO> lockSeats = new ArrayList<>();
-        TrainPurchaseTicketRespDTO seatToLock = TrainPurchaseTicketRespDTO.builder()
-                .carriageNumber(availableSeat.getCarriageNumber())
-                .seatNumber(availableSeat.getSeatNumber())
-                .passengerId(passengerId)
-                .build();
         lockSeats.add(seatToLock);
         
         // Lock the seat
         seatService.lockSeat(trainId, departure, arrival, lockSeats);
         
-        // if (!seatLocked) {
-        //     log.error("Failed to lock seat ID: {}", availableSeat.getId());
-        //     throw new RuntimeException("Failed to secure seat");
-        // }
-        
         // Update remaining tickets count in Redis
         stringRedisTemplate.opsForHash().increment(remainingTicketsKey, String.valueOf(seatType), -1);
         
-        // Create response with selected seat
-        TrainPurchaseTicketRespDTO ticketResp = TrainPurchaseTicketRespDTO.builder()
-                .carriageNumber(availableSeat.getCarriageNumber())
-                .seatNumber(availableSeat.getSeatNumber())
-                .passengerId(passengerId)
-                // .realName(passenger.getRealName())
-                .seatType(seatType)
-                .amount(price.getPrice())
-                .build();
-        
-        result.add(ticketResp);
+        result.add(seatToLock);
         
         return result;
     }
