@@ -31,7 +31,7 @@ public class TrainPurchaseTicketHandler {
     private String ticketAvailabilityCacheUpdateType;
 
     private static final Map<Character, Integer> SEAT_Y_INT = Map.of('A', 0, 'B', 1, 'C', 2, 'D', 3, 'F', 4);
-    private static final String TRAIN_STATION_REMAINING_TICKET = "train_station_remaining_ticket:";
+    private static final String TRAIN_STATION_REMAINING_TICKET = "railway:train:remaining:";
 
     public void run() {
         ticketAvailabilityCacheUpdateType = environment.getProperty("ticket.availability.cache-update.type", "");
