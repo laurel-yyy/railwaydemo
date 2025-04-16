@@ -35,6 +35,9 @@ public class RedisKeyConstant {
      * 获取相邻座位余票分布式锁 Key
      */
     public static final String LOCK_SAFE_LOAD_SEAT_MARGIN_GET = "railway:lock:safe_load_seat_margin_%s";
-
-    public static final String LOCK_PURCHASE_TICKETS = null;
+    
+    /**
+     * 购票操作分布式锁
+     */
+    public static final String LOCK_PURCHASE_TICKETS = "railway:lock:purchase_tickets:%s";
 }

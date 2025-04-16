@@ -37,7 +37,7 @@ public class TrainSeatTypeSelector {
     private final TrainStationPriceMapper trainStationPriceMapper;
     private final DistributedCache distributedCache;
 
-    private TrainPurchaseTicketHandler trainPurchaseTicketHandler;
+    private final TrainPurchaseTicketHandler trainPurchaseTicketHandler;
 
     /**
      * Select and allocate seats for ticket purchase
