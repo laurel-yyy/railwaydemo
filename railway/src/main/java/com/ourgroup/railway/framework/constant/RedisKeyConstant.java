@@ -25,6 +25,11 @@ public class RedisKeyConstant {
      * 列车车厢余票
      */
     public static final String TRAIN_STATION_CARRIAGE_REMAINING_TICKET = "railway:train:carriage:remaining:";
+
+    /**
+     * 列车车厢余票锁
+     */
+    public static final String LOCK_TRAIN_STATION_CARRIAGE_REMAINING_TICKET = "railway:lock:train:carriage:remaining:";
     
     /**
      * 列车站点锁

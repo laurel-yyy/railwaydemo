@@ -14,4 +14,34 @@
         (#{item.trainId}, #{item.carriageNumber}, #{item.startStation}, #{item.endStation}, #{item.seatNumber})
     </foreach>
 </update>
+
+<select id="listUsableCarriageNumber" resultType="java.lang.String">
+    SELECT
+        carriage_number
+    FROM
+        t_seat
+    WHERE
+        train_id = #{trainId}
+        AND seat_type = #{carriageType}
+        AND start_station = #{departure}
+        AND end_station = #{arrival}
+        AND seat_status = #{seatStatus}
+    GROUP BY
+        carriage_number
+</select>
+
+<select id="listSeatRemainingTicket" parameterType="com.ourgroup.railway.model.dao.SeatDO"
+            resultType="Integer">
+        select count(*) as count
+        from t_seat
+        where train_id = #{seatDO.trainId}
+        and start_station = #{seatDO.startStation}
+        and end_station = #{seatDO.endStation}
+        and seat_status = '0'
+        and carriage_number in
+        <foreach collection="trainCarriageList" item="carriage" open="(" separator="," close=")">
+            #{carriage}
+        </foreach>
+        group by carriage_number
+    </select>
 </mapper>

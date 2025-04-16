@@ -41,16 +41,18 @@ public interface SeatMapper {
                 "WHERE train_id = #{trainId} " +
                 "AND carriage_number = #{carriageNumber} " +
                 "AND seat_type = #{seatType} " +
-                "AND departure = #{departure} " +
-                "AND arrival = #{arrival} " +
+                "AND start_station = #{departure} " +
+                "AND end_station = #{arrival} " +
                 "AND seat_status = #{seatStatus} " +
                 "AND del_flag = 0")
         List<SeatDO> selectAvailableSeatList(@Param("trainId")Long trainId, @Param("carriageNumber")String carriageNumber, @Param("seatType")Integer seatType, 
-                @Param("depature")String departure, @Param("arrival")String arrival, @Param("seatStatus")Integer seatStatus);
+                @Param("departure")String departure, @Param("arrival")String arrival, @Param("seatStatus")Integer seatStatus);
 
 
         List<Integer> listSeatRemainingTicket(SeatDO seatDO, List<String> trainCarriageList);
 
 
         void batchUpdateSeatStatus(List<SeatDO> batchUpdateList);
+
+        List<String> listUsableCarriageNumber(String trainId, Integer carriageType, String departure, String arrival, Integer seatStatus);
 }
