@@ -55,7 +55,7 @@ const TicketPurchase = () => {
       // 设置购票数据
       setPurchaseData({
         trainId,
-        passengerId: user?.id || '', // 用户ID作为乘客ID
+        passengerId: '', 
         seatType,
         departure,
         arrival
@@ -106,7 +106,7 @@ const TicketPurchase = () => {
 
     try {
       // 检查必要字段
-      if (!purchaseData.trainId || !purchaseData.passengerId || !purchaseData.departure || !purchaseData.arrival) {
+      if (!purchaseData.trainId || !purchaseData.departure || !purchaseData.arrival) {
         throw new Error('请完善购票信息');
       }
 
@@ -226,27 +226,6 @@ const TicketPurchase = () => {
               </div>
             </div>
             
-            {/* 乘客信息 */}
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">乘客信息</h2>
-              
-              <div className="mb-4">
-                <label htmlFor="passengerId" className="block text-sm font-medium text-gray-700 mb-1">
-                  乘客ID
-                </label>
-                <input
-                  type="text"
-                  id="passengerId"
-                  name="passengerId"
-                  value={purchaseData.passengerId}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="请输入乘客ID"
-                  required
-                />
-                <p className="mt-1 text-sm text-gray-500">当前用户ID作为乘客ID</p>
-              </div>
-            </div>
             
             {/* 操作按钮 */}
             <div className="flex flex-col sm:flex-row gap-4">
