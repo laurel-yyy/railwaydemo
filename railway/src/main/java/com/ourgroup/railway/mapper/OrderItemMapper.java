@@ -66,7 +66,7 @@ public interface OrderItemMapper {
      * @param userId the user ID
      * @return list of order items
      */
-    List<OrderItemDO> findByUserId(String userId);
+    List<OrderItemDO> findByUserId(Long userId);
     
     /**
      * Find order items by train ID

@@ -25,7 +25,7 @@ public class TicketOrderDetailRespDTO {
     /**
      * user id
      */
-    private String userId;
+    private Long userId;
 
     /**
      * username

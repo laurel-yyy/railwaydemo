@@ -27,11 +27,11 @@
     <insert id="insert" parameterType="com.ourgroup.railway.model.dao.OrderDO" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO t_order (
             create_time, update_time, order_sn, user_id, username, train_id, train_number,
-            departure, arrival, source, status, order_time, pay_type, pay_time,
+            departure, arrival, status, order_time, pay_time,
             riding_date, departure_time, arrival_time
         ) VALUES (
             #{createTime}, #{updateTime}, #{orderSn}, #{userId}, #{username}, #{trainId}, #{trainNumber},
-            #{departure}, #{arrival}, #{source}, #{status}, #{orderTime}, #{payType}, #{payTime},
+            #{departure}, #{arrival}, #{status}, #{orderTime}, #{payTime},
             #{ridingDate}, #{departureTime}, #{arrivalTime}
         )
     </insert>

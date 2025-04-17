@@ -35,9 +35,9 @@ public class OrderDO {
     private String orderSn;
 
     /**
-     * user id
+     * user id same with UserDO
      */
-    private String userId;
+    private Long userId;
 
     /**
      * username

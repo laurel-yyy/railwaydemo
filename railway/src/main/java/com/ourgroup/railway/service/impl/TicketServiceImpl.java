@@ -68,6 +68,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.RequestBody;
 
 
 @Service
@@ -99,7 +100,11 @@ public class TicketServiceImpl implements TicketService{
     private final TrainSeatTypeSelector trainSeatTypeSelector;
 
     @Override
-    public TicketPageQueryRespDTO pageListQueryTicket(TicketPageQueryReqDTO requestParam) {
+    public TicketPageQueryRespDTO pageListQueryTicket(@RequestBody TicketPageQueryReqDTO requestParam) {
+        // 添加日志输出，查看请求参数的值
+        log.info("接收到查询请求参数: fromStation={}, toStation={}, departure={}, arrival={}",
+        requestParam.getFromStation(), requestParam.getToStation(),
+        requestParam.getDeparture(), requestParam.getArrival());
         StringRedisTemplate stringRedisTemplate = (StringRedisTemplate) distributedCache.getInstance();
         
         List<TicketListDTO> ticketList = new ArrayList<>();
@@ -325,17 +330,19 @@ public class TicketServiceImpl implements TicketService{
         orderCreateReq.setRidingDate(new Date()); // 可能需要根据实际情况调整
         orderCreateReq.setDepartureTime(trainDO.getDepartureTime());
         orderCreateReq.setArrivalTime(trainDO.getArrivalTime());
-        orderCreateReq.setUserId(requestParam.getPassengerId());
-        // 假设 passengerId 是字符串形式的用户ID
+        
+        // Set seat details
         Long userId = Long.parseLong(requestParam.getPassengerId());
         UserDO user = userMapper.selectById(userId);
-
+        
+        // 在创建userid前添加非空检查
+        log.info("UserId before null check: {}", userId);
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID cannot be null for sharding");
+        }
         if (user != null) {
-            // 设置用户ID和姓名
-            orderCreateReq.setUserId(user.getId().toString());
+            orderCreateReq.setUserId(userId);
             orderCreateReq.setUsername(user.getUsername());
-            // 如果需要真实姓名而不是用户名
-            // String realName = user.getRealName();
         }
 
         // Create order in OrderService

@@ -22,7 +22,7 @@ public class TicketOrderPassengerDetailRespDTO {
     /**
      * user id
      */
-    private String userId;
+    private Long userId;
 
     /**
      * username
