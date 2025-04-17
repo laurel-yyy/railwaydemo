@@ -3,6 +3,7 @@ package com.ourgroup.railway.service.impl;
 import org.springframework.util.CollectionUtils;
 import org.apache.shardingsphere.distsql.parser.autogen.KernelDistSQLStatementParser.UserContext;
 import org.checkerframework.checker.units.qual.A;
+import org.checkerframework.checker.units.qual.s;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -11,17 +12,22 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ourgroup.railway.framework.cache.DistributedCache;
 import com.ourgroup.railway.model.dto.req.PurchaseTicketReqDTO;
+import com.ourgroup.railway.model.dto.req.TicketOrderCreateReqDTO;
 import com.ourgroup.railway.model.dto.req.TicketPageQueryReqDTO;
 import com.ourgroup.railway.model.dto.resp.TicketOrderDetailRespDTO;
 import com.ourgroup.railway.model.dto.resp.TicketPageQueryRespDTO;
 import com.ourgroup.railway.model.dto.resp.TicketPurchaseRespDTO;
 import com.ourgroup.railway.model.dto.resp.TrainPurchaseTicketRespDTO;
+import com.ourgroup.railway.service.select.TrainSeatTypeSelector;
+import com.ourgroup.railway.model.constants.enums.TicketStatusEnum;
+import com.ourgroup.railway.service.OrderService;
 import com.ourgroup.railway.service.TicketService;
 import com.ourgroup.railway.service.cache.SeatMarginCacheLoader;
 import com.ourgroup.railway.model.dao.TicketDO;
 import com.ourgroup.railway.model.dao.TrainDO;
 import com.ourgroup.railway.model.dao.TrainStationPriceDO;
 import com.ourgroup.railway.model.dao.TrainStationRelationDO;
+import com.ourgroup.railway.model.dao.UserDO;
 import com.ourgroup.railway.model.dto.domain.SeatClassDTO;
 import com.ourgroup.railway.model.dto.domain.TicketListDTO;
 import com.ourgroup.railway.framework.constant.RedisKeyConstant;
@@ -29,6 +35,7 @@ import com.ourgroup.railway.framework.result.Result;
 import com.ourgroup.railway.mapper.TrainMapper;
 import com.ourgroup.railway.mapper.TrainStationPriceMapper;
 import com.ourgroup.railway.mapper.TrainStationRelationMapper;
+import com.ourgroup.railway.mapper.UserMapper;
 import com.ourgroup.railway.framework.constant.RailwayConstant;
 
 import java.math.BigDecimal;
@@ -48,6 +55,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import com.alibaba.fastjson2.JSON;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -58,10 +66,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.util.StringUtils;
+import lombok.extern.slf4j.Slf4j;
 
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TicketServiceImpl implements TicketService{
 
     private static final Logger logger = LoggerFactory.getLogger(TicketServiceImpl.class);
@@ -75,13 +86,17 @@ public class TicketServiceImpl implements TicketService{
     private final RedissonClient redissonClient;
     private final SeatMarginCacheLoader seatMarginCacheLoader;
 
+    private final OrderService orderService;
+
+
     private final ConfigurableEnvironment environment;
+    private final UserMapper userMapper;
 
 
     @Value("${framework.cache.redis.prefix}")
     private String cahceRedisPrefix;
     
-    // private TrainSeatTypeSelector trainSeatTypeSelector;
+    private final TrainSeatTypeSelector trainSeatTypeSelector;
 
     @Override
     public TicketPageQueryRespDTO pageListQueryTicket(TicketPageQueryReqDTO requestParam) {
@@ -252,18 +267,113 @@ public class TicketServiceImpl implements TicketService{
             .build();        
     }
 
+    
+   
+    @Override
+    @Transactional(rollbackFor = Throwable.class)
+    public TicketPurchaseRespDTO executePurchaseTickets(PurchaseTicketReqDTO requestParam) throws ServiceException {
+        List<TicketOrderDetailRespDTO> ticketOrderDetailResults = new ArrayList<>();
+        String trainId = requestParam.getTrainId();
+        
+        // Get train information from cache or database
+        TrainDO trainDO = distributedCache.safeGet(
+                RedisKeyConstant.TRAIN_INFO + trainId,
+                TrainDO.class,
+                () -> trainMapper.selectById(Long.parseLong(trainId)),
+                RailwayConstant.ADVANCE_TICKET_DAY,
+                TimeUnit.DAYS);
+        
+        if (trainDO == null) {
+            throw new ServiceException("Train not found with ID: " + trainId);
+        }
+        
+        // Select seats for this ticket purchase
+        List<TrainPurchaseTicketRespDTO> selectedSeats;
+        try {
+            selectedSeats = trainSeatTypeSelector.select(requestParam);
+        } catch (Exception e) {
+            throw new ServiceException("Failed to select seats: " + e.getMessage(), e);
+        }
+        
+        // Transform selected seats into ticket records
+        List<TicketDO> ticketDOList = new ArrayList<>();
+        for (TrainPurchaseTicketRespDTO seat : selectedSeats) {
+            TicketDO ticketDO = TicketDO.builder()
+                    // .username(requestParam.getUsername())
+                    .trainId(Long.parseLong(requestParam.getTrainId()))
+                    .carriageNumber(seat.getCarriageNumber())
+                    .seatNumber(seat.getSeatNumber())
+                    .passengerId(seat.getPassengerId())
+                    .ticketStatus(TicketStatusEnum.UNPAID.getCode())
+                    .build();
+            ticketDO.setCreateTime(new Date());
+            ticketDO.setUpdateTime(new Date());
+            
+            ticketDOList.add(ticketDO);
+            
 
-    // public TicketPurchaseRespDTO purchaseTicket(PurchaseTicketReqDTO requestParam){
+        }
+        
+        // Create order request
+        // TicketOrderCreateReqDTO orderCreateReq = buildOrderCreateRequest(requestParam, trainDO, selectedSeats);
+        
+        TicketOrderCreateReqDTO orderCreateReq = new TicketOrderCreateReqDTO();
+        orderCreateReq.setTrainId(Long.parseLong(requestParam.getTrainId()));
+        orderCreateReq.setTrainNumber(trainDO.getTrainNumber());
+        orderCreateReq.setDeparture(requestParam.getDeparture());
+        orderCreateReq.setArrival(requestParam.getArrival());
+        orderCreateReq.setRidingDate(new Date()); // 可能需要根据实际情况调整
+        orderCreateReq.setDepartureTime(trainDO.getDepartureTime());
+        orderCreateReq.setArrivalTime(trainDO.getArrivalTime());
+        orderCreateReq.setUserId(requestParam.getPassengerId());
+        // 假设 passengerId 是字符串形式的用户ID
+        Long userId = Long.parseLong(requestParam.getPassengerId());
+        UserDO user = userMapper.selectById(userId);
 
-    //     String lockKey = environment.resolvePlaceholders(String.format(RedisKeyConstant.LOCK_PURCHASE_TICKETS, requestParam.getTrainId()));
-    //     RLock lock = redissonClient.getLock(lockKey);
-    //     lock.lock();
-    //     try {
-    //         return ticketService.executePurchaseTickets(requestParam);
-    //     } finally {
-    //         lock.unlock();
-    //     }  
-    // }
+        if (user != null) {
+            // 设置用户ID和姓名
+            orderCreateReq.setUserId(user.getId().toString());
+            orderCreateReq.setUsername(user.getUsername());
+            // 如果需要真实姓名而不是用户名
+            // String realName = user.getRealName();
+        }
+
+        // Create order in OrderService
+        String orderSn = orderService.createTicketOrder(orderCreateReq);
+        
+        if (orderSn == null || orderSn.isEmpty()) {
+            throw new ServiceException("Failed to create order");
+        }
+        
+        // Query the created order details
+        TicketOrderDetailRespDTO orderDetail = orderService.queryTicketOrderByOrderSn(orderSn);
+        if (orderDetail != null) {
+            ticketOrderDetailResults.add(orderDetail);
+        }
+        
+        // Return purchase result with order number and details
+        return new TicketPurchaseRespDTO(orderSn, ticketOrderDetailResults);
+    }
+
+
+    public TicketPurchaseRespDTO purchaseTicket(PurchaseTicketReqDTO requestParam) throws ServiceException {
+
+        String trainId = requestParam.getTrainId();
+        if (trainId == null) {
+            throw new IllegalArgumentException("Train ID cannot be null");
+        }
+        log.info("LOCK_PURCHASE_TICKETS value: '{}'", RedisKeyConstant.LOCK_PURCHASE_TICKETS);
+        String lockKey = environment.resolvePlaceholders(String.format(RedisKeyConstant.LOCK_PURCHASE_TICKETS, requestParam.getTrainId()));
+        RLock lock = redissonClient.getLock(lockKey);
+        lock.lock();
+        try {
+            return executePurchaseTickets(requestParam);
+        } catch (ServiceException e) {
+            throw new RuntimeException("Failed to purchase ticket: " + e.getMessage(), e);
+        } finally {
+            lock.unlock();
+        } 
+    }
     
     // @Override
     // @Transactional(rollbackFor = Throwable.class)

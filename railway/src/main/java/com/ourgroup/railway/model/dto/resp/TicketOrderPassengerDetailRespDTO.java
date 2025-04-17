@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 车票订单详情返回参数
+ * Ticket order passenger detail response DTO
  */
 @Data
 @Builder
@@ -15,52 +15,67 @@ import lombok.NoArgsConstructor;
 public class TicketOrderPassengerDetailRespDTO {
 
     /**
-     * ID
+     * id
      */
-    private String id;
+    private Long id;
 
     /**
-     * 用户id
+     * user id
      */
     private String userId;
 
     /**
-     * 用户名
+     * username
      */
     private String username;
 
     /**
-     * 席别类型
+     * seat type
      */
     private Integer seatType;
 
     /**
-     * 车厢号
+     * carriage number
      */
     private String carriageNumber;
 
     /**
-     * 座位号
+     * seat number
      */
     private String seatNumber;
 
     /**
-     * 真实姓名
+     * real name
      */
     private String realName;
 
     /**
-     * 订单金额
+     * id type
+     */
+    private Integer idType;
+
+    /**
+     * id card
+     */
+    private String idCard;
+
+    /**
+     * ticket type 0: adult 1: child 2: student 3: disabled military
+     */
+    private Integer ticketType;
+
+    /**
+     * amount
      */
     private Integer amount;
 
     /**
-     * 车票状态
+     * status
      */
     private Integer status;
 
     /**
-     * 车票状态名称
+     * status name
      */
     private String statusName;
 }

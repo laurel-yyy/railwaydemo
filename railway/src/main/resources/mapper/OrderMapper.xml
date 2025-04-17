@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ourgroup.railway.mapper.OrderMapper">
+    <!-- Result map for Order entity -->
+    <resultMap id="orderResultMap" type="com.ourgroup.railway.model.dao.OrderDO">
+        <id property="id" column="id"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="orderSn" column="order_sn"/>
+        <result property="userId" column="user_id"/>
+        <result property="username" column="username"/>
+        <result property="trainId" column="train_id"/>
+        <result property="trainNumber" column="train_number"/>
+        <result property="departure" column="departure"/>
+        <result property="arrival" column="arrival"/>
+        <result property="source" column="source"/>
+        <result property="status" column="status"/>
+        <result property="orderTime" column="order_time"/>
+        <result property="payType" column="pay_type"/>
+        <result property="payTime" column="pay_time"/>
+        <result property="ridingDate" column="riding_date"/>
+        <result property="departureTime" column="departure_time"/>
+        <result property="arrivalTime" column="arrival_time"/>
+    </resultMap>
+    
+    <!-- Insert a new order -->
+    <insert id="insert" parameterType="com.ourgroup.railway.model.dao.OrderDO" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_order (
+            create_time, update_time, order_sn, user_id, username, train_id, train_number,
+            departure, arrival, source, status, order_time, pay_type, pay_time,
+            riding_date, departure_time, arrival_time
+        ) VALUES (
+            #{createTime}, #{updateTime}, #{orderSn}, #{userId}, #{username}, #{trainId}, #{trainNumber},
+            #{departure}, #{arrival}, #{source}, #{status}, #{orderTime}, #{payType}, #{payTime},
+            #{ridingDate}, #{departureTime}, #{arrivalTime}
+        )
+    </insert>
+    
+    <!-- Update an existing order -->
+    <update id="update" parameterType="com.ourgroup.railway.model.dao.OrderDO">
+        UPDATE t_order
+        SET update_time = #{updateTime},
+            user_id = #{userId},
+            username = #{username},
+            train_id = #{trainId},
+            train_number = #{trainNumber},
+            departure = #{departure},
+            arrival = #{arrival},
+            source = #{source},
+            status = #{status},
+            order_time = #{orderTime},
+            pay_type = #{payType},
+            pay_time = #{payTime},
+            riding_date = #{ridingDate},
+            departure_time = #{departureTime},
+            arrival_time = #{arrivalTime}
+        WHERE id = #{id}
+    </update>
+    
+    <!-- Delete an order by ID -->
+    <delete id="deleteById" parameterType="java.lang.Long">
+        DELETE FROM t_order WHERE id = #{id}
+    </delete>
+    
+    <!-- Find an order by ID -->
+    <select id="findById" parameterType="java.lang.Long" resultMap="orderResultMap">
+        SELECT * FROM t_order WHERE id = #{id}
+    </select>
+    
+    <!-- Find an order by order number -->
+    <select id="findByOrderSn" parameterType="java.lang.String" resultMap="orderResultMap">
+        SELECT * FROM t_order WHERE order_sn = #{orderSn}
+    </select>
+    
+    <!-- Find orders by user ID -->
+    <select id="findByUserId" parameterType="java.lang.String" resultMap="orderResultMap">
+        SELECT * FROM t_order WHERE user_id = #{userId} ORDER BY create_time DESC
+    </select>
+    
+    <!-- Find orders by status -->
+    <select id="findByStatus" parameterType="java.lang.Integer" resultMap="orderResultMap">
+        SELECT * FROM t_order WHERE status = #{status} ORDER BY create_time DESC
+    </select>
+    
+    <!-- Find orders by train number and riding date -->
+    <select id="findByTrainNumberAndRidingDate" resultMap="orderResultMap">
+        SELECT * FROM t_order 
+        WHERE train_number = #{trainNumber} 
+        AND riding_date = #{ridingDate}
+        ORDER BY create_time DESC
+    </select>
+    
+    <!-- Update order status by order number -->
+    <update id="updateStatusByOrderSn">
+        UPDATE t_order
+        SET status = #{status},
+            update_time = NOW()
+        WHERE order_sn = #{orderSn}
+    </update>
+    
+    <!-- Count orders by status -->
+    <select id="countByStatus" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM t_order WHERE status = #{status}
+    </select>
+</mapper>

@@ -36,4 +36,5 @@ public class PurchaseTicketReqDTO {
      * 到达站点
      */
     private String arrival;
+
 }
