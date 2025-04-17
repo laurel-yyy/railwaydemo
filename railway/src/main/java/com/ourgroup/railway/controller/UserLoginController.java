@@ -17,7 +17,7 @@ public class UserLoginController {
     private UserLoginService userLoginService;
 
     /**
-     * 用户登录
+     * User login
      */
     @PostMapping("/login")
     public Result<UserLoginRespDTO> login(@RequestBody UserLoginReqDTO requestParam) {
@@ -26,7 +26,7 @@ public class UserLoginController {
     }
 
     /**
-     * 用户注册
+     * User registration
      */
     @PostMapping("/register")
     public Result<String> register(@RequestBody UserRegisterReqDTO requestParam) {
