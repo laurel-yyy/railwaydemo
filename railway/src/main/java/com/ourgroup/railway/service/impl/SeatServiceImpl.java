@@ -49,77 +49,78 @@ public class SeatServiceImpl implements SeatService {
     }
 
     @Override
-public List<Integer> listSeatRemainingTicket(String trainId, String departure, String arrival, List<String> trainCarriageList) {
-    String keySuffix = String.join("_", trainId, departure, arrival);
-    String redisKey = RedisKeyConstant.TRAIN_STATION_CARRIAGE_REMAINING_TICKET + keySuffix;
-    
-    // 先尝试从缓存获取
-    if (distributedCache.hasKey(redisKey)) {
-        StringRedisTemplate stringRedisTemplate = (StringRedisTemplate) distributedCache.getInstance();
-        List<Object> trainStationCarriageRemainingTicket =
-                stringRedisTemplate.opsForHash().multiGet(redisKey, Arrays.asList(trainCarriageList.toArray()));
-        if (!CollectionUtils.isEmpty(trainStationCarriageRemainingTicket)) {
-            return trainStationCarriageRemainingTicket.stream()
-                    .map(each -> Integer.parseInt(each.toString()))
-                    .collect(Collectors.toList());
-        }
-    }
-    
-    // 缓存中没有数据，需要从数据库查询
-    RLock lock = redissonClient.getLock(RedisKeyConstant.LOCK_TRAIN_STATION_CARRIAGE_REMAINING_TICKET + keySuffix);
-    lock.lock();
-    
-    try {
-        // 双重检查，避免重复查询数据库
+    public List<Integer> listSeatRemainingTicket(String trainId, String departure, String arrival, List<String> trainCarriageList) {
+        String keySuffix = String.join("_", trainId, departure, arrival);
+        String redisKey = RedisKeyConstant.TRAIN_STATION_CARRIAGE_REMAINING_TICKET + keySuffix;
+        
+        // 先尝试从缓存获取
         if (distributedCache.hasKey(redisKey)) {
             StringRedisTemplate stringRedisTemplate = (StringRedisTemplate) distributedCache.getInstance();
             List<Object> trainStationCarriageRemainingTicket =
                     stringRedisTemplate.opsForHash().multiGet(redisKey, Arrays.asList(trainCarriageList.toArray()));
             if (!CollectionUtils.isEmpty(trainStationCarriageRemainingTicket)) {
                 return trainStationCarriageRemainingTicket.stream()
+                        .filter(each -> each != null)  // 添加null过滤
                         .map(each -> Integer.parseInt(each.toString()))
                         .collect(Collectors.toList());
             }
         }
         
-        SeatDO seatDO = SeatDO.builder()
-                .trainId(Long.parseLong(trainId))
-                .startStation(departure)
-                .endStation(arrival)
-                .build();
-        List<Integer> remainingTickets = seatMapper.listSeatRemainingTicket(seatDO, trainCarriageList);
+        // 缓存中没有数据，需要从数据库查询
+        RLock lock = redissonClient.getLock(RedisKeyConstant.LOCK_TRAIN_STATION_CARRIAGE_REMAINING_TICKET + keySuffix);
+        lock.lock();
         
-        if (!CollectionUtils.isEmpty(remainingTickets)) {
-            StringRedisTemplate stringRedisTemplate = (StringRedisTemplate) distributedCache.getInstance();
-            Map<String, String> carriageTicketMap = new HashMap<>();
-            
-            for (int i = 0; i < trainCarriageList.size(); i++) {
-                if (i < remainingTickets.size()) {
-                    carriageTicketMap.put(trainCarriageList.get(i), String.valueOf(remainingTickets.get(i)));
+        try {
+            // 双重检查，避免重复查询数据库
+            if (distributedCache.hasKey(redisKey)) {
+                StringRedisTemplate stringRedisTemplate = (StringRedisTemplate) distributedCache.getInstance();
+                List<Object> trainStationCarriageRemainingTicket =
+                        stringRedisTemplate.opsForHash().multiGet(redisKey, Arrays.asList(trainCarriageList.toArray()));
+                if (!CollectionUtils.isEmpty(trainStationCarriageRemainingTicket)) {
+                    return trainStationCarriageRemainingTicket.stream()
+                            .map(each -> Integer.parseInt(each.toString()))
+                            .collect(Collectors.toList());
                 }
             }
             
-            if (!carriageTicketMap.isEmpty()) {
-                stringRedisTemplate.opsForHash().putAll(redisKey, carriageTicketMap);
-                stringRedisTemplate.expire(redisKey, RailwayConstant.ADVANCE_TICKET_DAY, TimeUnit.DAYS);
+            SeatDO seatDO = SeatDO.builder()
+                    .trainId(Long.parseLong(trainId))
+                    .startStation(departure)
+                    .endStation(arrival)
+                    .build();
+            List<Integer> remainingTickets = seatMapper.listSeatRemainingTicket(seatDO, trainCarriageList);
+            
+            if (!CollectionUtils.isEmpty(remainingTickets)) {
+                StringRedisTemplate stringRedisTemplate = (StringRedisTemplate) distributedCache.getInstance();
+                Map<String, String> carriageTicketMap = new HashMap<>();
+                
+                for (int i = 0; i < trainCarriageList.size(); i++) {
+                    if (i < remainingTickets.size()) {
+                        carriageTicketMap.put(trainCarriageList.get(i), String.valueOf(remainingTickets.get(i)));
+                    }
+                }
+                
+                if (!carriageTicketMap.isEmpty()) {
+                    stringRedisTemplate.opsForHash().putAll(redisKey, carriageTicketMap);
+                    stringRedisTemplate.expire(redisKey, RailwayConstant.ADVANCE_TICKET_DAY, TimeUnit.DAYS);
+                }
+            }
+            
+            return remainingTickets;
+        } catch (Exception e) {
+            SeatDO seatDO = SeatDO.builder()
+                    .trainId(Long.parseLong(trainId))
+                    .startStation(departure)
+                    .endStation(arrival)
+                    .build();
+            return seatMapper.listSeatRemainingTicket(seatDO, trainCarriageList);
+        } finally {
+            // 释放锁
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
             }
         }
-        
-        return remainingTickets;
-    } catch (Exception e) {
-        SeatDO seatDO = SeatDO.builder()
-                .trainId(Long.parseLong(trainId))
-                .startStation(departure)
-                .endStation(arrival)
-                .build();
-        return seatMapper.listSeatRemainingTicket(seatDO, trainCarriageList);
-    } finally {
-        // 释放锁
-        if (lock.isHeldByCurrentThread()) {
-            lock.unlock();
-        }
     }
-}
 
     @Override
     public void lockSeat(String trainId, String departure, String arrival, List<TrainPurchaseTicketRespDTO> trainPurchaseTicketRespList) {

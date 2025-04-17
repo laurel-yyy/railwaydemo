@@ -59,7 +59,7 @@ public interface OrderMapper {
      * @param userId the user ID
      * @return list of orders
      */
-    List<OrderDO> findByUserId(String userId);
+    List<OrderDO> findByUserId(Long userId);
     
     /**
      * Find orders by status

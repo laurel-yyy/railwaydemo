@@ -12,7 +12,7 @@ public class TicketOrderPageQueryReqDTO extends PageRequest {
     /**
      * user id
      */
-    private String userId;
+    private Long userId;
 
     /**
      * status type 0: unfinished 1: upcoming trip 2: historical order

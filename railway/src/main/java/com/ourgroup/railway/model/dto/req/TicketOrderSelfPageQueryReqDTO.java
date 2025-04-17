@@ -12,5 +12,5 @@ public class TicketOrderSelfPageQueryReqDTO extends PageRequest {
     /**
      * user id
      */
-    private String userId;
+    private Long userId;
 }

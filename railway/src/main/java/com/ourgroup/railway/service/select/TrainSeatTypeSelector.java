@@ -78,12 +78,28 @@ public class TrainSeatTypeSelector {
         String remainingTicketsKey = RedisKeyConstant.TRAIN_STATION_REMAINING_TICKET + keySuffix;
         
         // Get remaining tickets count from Redis
-        Object remainingObj = stringRedisTemplate.opsForHash().get(remainingTicketsKey, String.valueOf(seatType));
-        int remainingCount = remainingObj != null ? Integer.parseInt(remainingObj.toString()) : 0;
+        // Object remainingObj = stringRedisTemplate.opsForHash().get(remainingTicketsKey, String.valueOf(seatType));
+        int remainingCount = distributedCache.safeGet(
+            remainingTicketsKey + ":" + seatType, 
+            Integer.class, 
+            () -> {
+                // 使用 SeatMapper 查询可用座位数量
+                Integer availableSeats = seatMapper.countAvailableSeats(
+                    Long.parseLong(trainId),     // 火车ID
+                    seatType,                    // 座位类型
+                    0,                           // 座位状态（可用）
+                    departure,                   // 出发站
+                    arrival                      // 到达站
+                );
+                
+                return availableSeats != null ? availableSeats : 0;
+            }, 
+            RailwayConstant.ADVANCE_TICKET_DAY
+        );
         
         if (remainingCount <= 0) {
-            log.error("No available seats for train: {}, departure: {}, arrival: {}, seatType: {}", 
-                      trainId, departure, arrival, seatType);
+            log.error("No available seats for train: {}, departure: {}, arrival: {}, seatType: {}",
+                       trainId, departure, arrival, seatType);
             throw new RuntimeException("No available seats for selected type");
         }
         
@@ -143,9 +159,14 @@ public class TrainSeatTypeSelector {
      * @return Price information or null if not found
      */
     private TrainStationPriceDO getTrainStationPrice(Long trainId, String departure, String arrival, Integer seatType) {
+        // 日志记录输入参数
+        log.info("获取车票价格 - trainId: {}, departure: {}, arrival: {}, seatType: {}", 
+        trainId, departure, arrival, seatType);
+        
         // Build cache key using existing constant, adding seat type
         String cacheKey = String.format(RedisKeyConstant.TRAIN_STATION_PRICE, 
                 trainId, departure, arrival) + ":" + seatType;
+        log.info("Cache key for train station price: {}", cacheKey);
         
         return distributedCache.safeGet(
                 cacheKey,
@@ -153,15 +174,29 @@ public class TrainSeatTypeSelector {
                 () -> {
                     // Query price list for all seat types
                     List<TrainStationPriceDO> priceList = trainStationPriceMapper.selectByTrainAndStations(trainId, departure, arrival);
+                    log.info("数据库查询结果 - priceList size: {}", priceList != null ? priceList.size() : 0);
                     if (priceList != null && !priceList.isEmpty()) {
+                        // 详细记录每条价格记录
+                        for (TrainStationPriceDO price : priceList) {
+                            log.info("价格记录详情 - trainId: {}, departure: {}, arrival: {}, seatType: {}, price: {}", 
+                                    price.getTrainId(), price.getDeparture(), price.getArrival(), 
+                                    price.getSeatType(), price.getPrice());
+                        }
+                        
                         // Filter to find price for the specified seat type
                         for (TrainStationPriceDO price : priceList) {
                             if (price.getSeatType().equals(seatType)) {
+                                log.info("找到匹配的价格记录: {}", price);
                                 return price; // Return matching price
                             }
                         }
+
+                        log.warn("未找到匹配的座位类型: {}", seatType);
+                    } else {
+                        log.warn("未查询到任何价格记录");
                     }
-                    return null; // Return null if no matching price found
+        
+                    return null;
                 },
                 RailwayConstant.ADVANCE_TICKET_DAY,
                 TimeUnit.DAYS);

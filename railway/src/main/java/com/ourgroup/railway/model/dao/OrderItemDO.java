@@ -38,7 +38,7 @@ public class OrderItemDO {
     /**
      * user id
      */
-    private String userId;
+    private Long userId;
 
     /**
      * username

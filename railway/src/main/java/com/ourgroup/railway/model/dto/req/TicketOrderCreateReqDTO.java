@@ -47,9 +47,9 @@ public class TicketOrderCreateReqDTO {
     private Date arrivalTime;
     
     /**
-     * User ID
+     * User ID type same with UserDO
      */
-    private String userId;
+    private Long userId; 
     
     /**
      * Username
