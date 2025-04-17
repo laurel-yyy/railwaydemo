@@ -32,6 +32,7 @@ import com.ourgroup.railway.model.dto.domain.SeatClassDTO;
 import com.ourgroup.railway.model.dto.domain.TicketListDTO;
 import com.ourgroup.railway.framework.constant.RedisKeyConstant;
 import com.ourgroup.railway.framework.result.Result;
+import com.ourgroup.railway.framework.toolkit.JWTUtil;
 import com.ourgroup.railway.mapper.TrainMapper;
 import com.ourgroup.railway.mapper.TrainStationPriceMapper;
 import com.ourgroup.railway.mapper.TrainStationRelationMapper;
@@ -69,6 +70,7 @@ import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RequestBody;
+import jakarta.servlet.http.HttpServletRequest;
 
 
 @Service
@@ -93,6 +95,7 @@ public class TicketServiceImpl implements TicketService{
     private final ConfigurableEnvironment environment;
     private final UserMapper userMapper;
 
+    private final HttpServletRequest request;
 
     @Value("${framework.cache.redis.prefix}")
     private String cahceRedisPrefix;
@@ -277,6 +280,25 @@ public class TicketServiceImpl implements TicketService{
     @Override
     @Transactional(rollbackFor = Throwable.class)
     public TicketPurchaseRespDTO executePurchaseTickets(PurchaseTicketReqDTO requestParam) throws ServiceException {
+
+        String authHeader = request.getHeader("Authorization");
+        String userId1 = null;
+    
+    if (authHeader != null && authHeader.startsWith("Bearer ")) {
+        String token = authHeader.substring(7);
+        if (JWTUtil.validateToken(token)) {
+            // 从JWT中提取用户ID
+            userId1 = JWTUtil.getUserIdFromToken(token);
+            
+            // 将用户ID设置到requestParam的passengerId字段
+            requestParam.setPassengerId(userId1);
+        } else {
+            throw new ServiceException("Invalid token");
+        }
+    } else {
+        throw new ServiceException("Authorization token is required");
+    }
+
         List<TicketOrderDetailRespDTO> ticketOrderDetailResults = new ArrayList<>();
         String trainId = requestParam.getTrainId();
         
@@ -381,43 +403,6 @@ public class TicketServiceImpl implements TicketService{
             lock.unlock();
         } 
     }
-    
-    // @Override
-    // @Transactional(rollbackFor = Throwable.class)
-    // public TicketPurchaseRespDTO executePurchaseTickets(PurchaseTicketReqDTO requestParam) {
-    //     List<TicketOrderDetailRespDTO> ticketOrderDetailResults = new ArrayList<>();
-    //     String trainId = requestParam.getTrainId();
-    //     TrainDO trainDO = distributedCache.safeGet(
-    //             RedisKeyConstant.TRAIN_INFO + trainId,
-    //             TrainDO.class,
-    //             () -> trainMapper.selectById(Long.parseLong(trainId)),
-    //             RailwayConstant.ADVANCE_TICKET_DAY,
-    //             TimeUnit.DAYS);
-
-    //     //美好的消息队列从这里开始
-    //     TrainPurchaseTicketRespDTO trainPurchaseTicketResults = trainSeatTypeSelector.select(requestParam);
-    //     List<TicketDO> ticketDOList = trainPurchaseTicketResults.stream()
-    //             .map(each -> TicketDO.builder()
-    //                     .username(UserContext.getUsername())
-    //                     .trainId(Long.parseLong(requestParam.getTrainId()))
-    //                     .carriageNumber(each.getCarriageNumber())
-    //                     .seatNumber(each.getSeatNumber())
-    //                     .passengerId(each.getPassengerId())
-    //                     .ticketStatus(TicketStatusEnum.UNPAID.getCode())
-    //                     .build())
-    //             .toList();
-    //     saveBatch(ticketDOList);
-    //     Result<String> ticketOrderResult;
-        
-    //     //自己加油吧自己加油吧自己加油吧自己加油吧
-    //     //祝你好运
-    //     //我不干了 再看一眼就要爆炸 
-    //     //不干了睡大觉
-    //     //我要去睡大觉
-    //     //睡...大...
-
-    //     return new TicketPurchaseRespDTO(ticketOrderResult.getData(), ticketOrderDetailResults);
-    // }
 
     private String formatTime(Date date, String pattern) {
         if (date == null) {

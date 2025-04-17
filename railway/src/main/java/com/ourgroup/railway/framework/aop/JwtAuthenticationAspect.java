@@ -34,48 +34,48 @@ public class JwtAuthenticationAspect {
     @Around("authenticatedOperations()")
     public Object authenticate(ProceedingJoinPoint joinPoint) throws Throwable {
         // 获取当前请求对象
-        return joinPoint.proceed();
-        // ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        // HttpServletRequest request = attributes.getRequest();
+        // return joinPoint.proceed();
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        HttpServletRequest request = attributes.getRequest();
         
-        // // 从请求头中获取Authorization字段的值
-        // String authHeader = request.getHeader("Authorization");
+        // 从请求头中获取Authorization字段的值
+        String authHeader = request.getHeader("Authorization");
         
-        // // 检查是否有Authorization头，并且是否以Bearer开头
-        // if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-        //     return Result.error("缺少有效的认证令牌");
-        // }
+        // 检查是否有Authorization头，并且是否以Bearer开头
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return Result.error("缺少有效的认证令牌");
+        }
         
-        // // 提取JWT令牌 (去掉"Bearer "前缀)
-        // String token = authHeader.substring(7);
+        // 提取JWT令牌 (去掉"Bearer "前缀)
+        String token = authHeader.substring(7);
         
-        // // 验证令牌
-        // if (!JWTUtil.validateToken(token)) {
-        //     return Result.error("无效的认证令牌或令牌已过期");
-        // }
+        // 验证令牌
+        if (!JWTUtil.validateToken(token)) {
+            return Result.error("无效的认证令牌或令牌已过期");
+        }
         
-        // try {
-        //     // 从有效令牌中提取用户ID
-        //     String userId = JWTUtil.getUserIdFromToken(token);
+        try {
+            // 从有效令牌中提取用户ID
+            String userId = JWTUtil.getUserIdFromToken(token);
             
-        //     // 将用户ID存储在请求属性中，供后续方法使用
-        //     request.setAttribute("userId", userId);
+            // 将用户ID存储在请求属性中，供后续方法使用
+            request.setAttribute("userId", userId);
             
-        //     // 认证通过，继续执行原始方法
-        //     return joinPoint.proceed();
+            // 认证通过，继续执行原始方法
+            return joinPoint.proceed();
             
-        // } catch (Exception e) {
-        //     // 处理令牌解析过程中的任何异常
-        //     return Result.error("令牌处理异常: " + e.getMessage());
-        // }
+        } catch (Exception e) {
+            // 处理令牌解析过程中的任何异常
+            return Result.error("令牌处理异常: " + e.getMessage());
+        }
     }
     
     /**
      * 辅助方法 - 在控制器中获取当前用户ID
      */
-    // public static String getCurrentUserId() {
-    //     ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-    //     HttpServletRequest request = attributes.getRequest();
-    //     return (String) request.getAttribute("userId");
-    // }
+    public static String getCurrentUserId() {
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        HttpServletRequest request = attributes.getRequest();
+        return (String) request.getAttribute("userId");
+    }
 }
