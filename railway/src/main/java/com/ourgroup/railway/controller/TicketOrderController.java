@@ -41,13 +41,13 @@ public class TicketOrderController {
         return Results.success(orderService.queryTicketOrderByOrderSn(orderSn));
     }
 
-    /**
-     * Query ticket item details by item record ID
-     */
-    @GetMapping("/api/order-service/order/item/ticket/query")
-    public Result<List<TicketOrderPassengerDetailRespDTO>> queryTicketItemOrderById(TicketOrderItemQueryReqDTO requestParam) {
-        return Results.success(orderItemService.queryTicketItemOrderById(requestParam));
-    }
+    // /**
+    //  * Query ticket item details by item record ID
+    //  */
+    // @GetMapping("/api/order-service/order/item/ticket/query")
+    // public Result<List<TicketOrderPassengerDetailRespDTO>> queryTicketItemOrderById(TicketOrderItemQueryReqDTO requestParam) {
+    //     return Results.success(orderItemService.queryTicketItemOrderById(requestParam));
+    // }
 
     /**
      * Page query ticket orders
@@ -77,7 +77,7 @@ public class TicketOrderController {
      * Close ticket order
      */
     @PostMapping("/api/order-service/order/ticket/close")
-    public Result<Boolean> closeTickOrder(@RequestBody CancelTicketOrderReqDTO requestParam) {
+    public Result<Boolean> closeTickOrder(CancelTicketOrderReqDTO requestParam) {
         return Results.success(orderService.closeTickOrder(requestParam));
     }
 
@@ -85,7 +85,7 @@ public class TicketOrderController {
      * Cancel ticket order
      */
     @PostMapping("/api/order-service/order/ticket/cancel")
-    public Result<Boolean> cancelTickOrder(@RequestBody CancelTicketOrderReqDTO requestParam) {
+    public Result<Boolean> cancelTickOrder( CancelTicketOrderReqDTO requestParam) {
         return Results.success(orderService.cancelTickOrder(requestParam));
     }
 }

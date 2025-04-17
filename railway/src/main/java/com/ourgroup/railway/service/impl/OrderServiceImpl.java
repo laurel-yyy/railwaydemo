@@ -183,7 +183,8 @@ public class OrderServiceImpl implements OrderService {
         // Update order status
         orderDO.setStatus(2); // Closed
         orderDO.setUpdateTime(new Date());
-        int updated = orderMapper.update(orderDO);
+        // Update order status
+        int updated = orderMapper.updateStatusByOrderSn(orderSn, 2); // 使用这个方法代替 update
         
         if (updated <= 0) {
             return false;
@@ -224,7 +225,7 @@ public class OrderServiceImpl implements OrderService {
     
     private TicketOrderDetailRespDTO convertToOrderDetailDTO(OrderDO orderDO) {
         TicketOrderDetailRespDTO dto = new TicketOrderDetailRespDTO();
-        dto.setId(null);
+        dto.setId(orderDO.getId());
         dto.setOrderSn(orderDO.getOrderSn());
         dto.setUserId(orderDO.getUserId());
         dto.setUsername(orderDO.getUsername());
