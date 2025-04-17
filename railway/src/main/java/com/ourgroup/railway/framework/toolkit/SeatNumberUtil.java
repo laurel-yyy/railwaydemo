@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 座位号转换工具
+ * Seat Number Convert Util
  */
 public final class SeatNumberUtil {
 
@@ -19,11 +19,7 @@ public final class SeatNumberUtil {
     }
 
     /**
-     * 根据类型转换座位号
-     *
-     * @param type 列车座位类型
-     * @param num  座位号
-     * @return 座位编号
+     * Convert seat number to serial number.
      */
     public static String convert(int num) {
         String serialNumber =  TRAIN_SEAT_NUMBER_MAP.get(num);

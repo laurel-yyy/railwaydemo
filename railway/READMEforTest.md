@@ -34,7 +34,7 @@ Order:
     RETURN:
         {"code":1,"msg":null,"data":{"current":1,"size":10,"total":2,"records":[{"id":2,"orderSn":"RW1744871175239102e8279","userId":1744859198560,"username":"john_doe","trainId":1,"departure":"New York","arrival":"Chicago","ridingDate":"2025-04-17","orderTime":"2025-04-17","trainNumber":"US101","departureTime":"17:56","arrivalTime":"23:14","source":null,"status":0,"payType":null,"payTime":null,"createTime":"2025-04-17T06:26:15.000+00:00","updateTime":"2025-04-17T06:26:15.000+00:00","totalAmount":null,"passengerDetails":null},{"id":1,"orderSn":"RW1744868916819a29ecf5f","userId":1744859198560,"username":"john_doe","trainId":1,"departure":"New York","arrival":"Chicago","ridingDate":"2025-04-17","orderTime":"2025-04-17","trainNumber":"US101","departureTime":"17:56","arrivalTime":"23:14","source":null,"status":0,"payType":null,"payTime":null,"createTime":"2025-04-17T05:48:37.000+00:00","updateTime":"2025-04-17T05:48:37.000+00:00","totalAmount":null,"passengerDetails":null}],"totalPages":1}}
 
-    cancelTicketOrder:
+    ChangeTicketOrder:
     Post:
         http://localhost:8080/api/order-service/order/ticket/cancel?orderSn=RW1744868916819a29ecf5f
     

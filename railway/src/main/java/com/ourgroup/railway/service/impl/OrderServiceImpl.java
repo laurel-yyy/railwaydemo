@@ -10,7 +10,7 @@ import com.ourgroup.railway.model.dao.OrderItemDO;
 import com.ourgroup.railway.model.dao.OrderItemPassengerDO;
 import com.ourgroup.railway.mapper.OrderMapper;
 import com.ourgroup.railway.mapper.OrderItemMapper;
-import com.ourgroup.railway.model.dto.req.CancelTicketOrderReqDTO;
+import com.ourgroup.railway.model.dto.req.ChangeTicketOrderReqDTO;
 import com.ourgroup.railway.model.dto.req.TicketOrderCreateReqDTO;
 import com.ourgroup.railway.model.dto.req.TicketOrderItemCreateReqDTO;
 import com.ourgroup.railway.model.dto.req.TicketOrderPageQueryReqDTO;
@@ -21,7 +21,10 @@ import com.ourgroup.railway.model.dto.resp.TicketOrderPassengerDetailRespDTO;
 import com.ourgroup.railway.service.OrderItemService;
 import com.ourgroup.railway.service.OrderPassengerRelationService;
 import com.ourgroup.railway.service.OrderService;
+import com.google.protobuf.ServiceException;
 import com.ourgroup.railway.framework.convention.page.PageResponse;
+import com.ourgroup.railway.framework.toolkit.JWTUtil;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -40,6 +43,8 @@ public class OrderServiceImpl implements OrderService {
     private final OrderItemMapper orderItemMapper;
     private final OrderItemService orderItemService;
     private final OrderPassengerRelationService orderPassengerRelationService;
+
+    private final HttpServletRequest request;
 
     @Override
     public TicketOrderDetailRespDTO queryTicketOrderByOrderSn(String orderSn) {
@@ -66,8 +71,15 @@ public class OrderServiceImpl implements OrderService {
         
         // In a real implementation, you would use requestParam.getCurrent() and requestParam.getSize()
         // to implement proper pagination with database LIMIT and OFFSET
-        
-        List<OrderDO> orderList = orderMapper.findByUserId(requestParam.getUserId());
+        String authHeader = request.getHeader("Authorization");
+        String userId1 = null;
+    
+    if (authHeader != null && authHeader.startsWith("Bearer ")) {
+        String token = authHeader.substring(7);
+        userId1 = JWTUtil.getUserIdFromToken(token);
+    }
+
+        List<OrderDO> orderList = orderMapper.findByUserId(Long.parseLong(userId1));
         List<TicketOrderDetailRespDTO> resultList = new ArrayList<>();
         
         for (OrderDO orderDO : orderList) {
@@ -171,7 +183,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public boolean closeTickOrder(CancelTicketOrderReqDTO requestParam) {
+    public boolean payTickOrder(ChangeTicketOrderReqDTO requestParam) {
         String orderSn = requestParam.getOrderSn();
         
         // Find order
@@ -203,9 +215,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public boolean cancelTickOrder(CancelTicketOrderReqDTO requestParam) {
-        // The logic is similar to closeTickOrder in this simplified implementation
-        return closeTickOrder(requestParam);
+    public boolean cancelTickOrder(ChangeTicketOrderReqDTO requestParam) {
+        // The logic is similar to payTickOrder in this simplified implementation
+        return payTickOrder(requestParam);
     }
 
     @Override

@@ -26,15 +26,15 @@ const Register = () => {
     setLoading(true);
     setError('');
 
-    // 验证密码一致性
+    // Validate password consistency
     if (formData.password !== formData.confirmPassword) {
-      setError('两次输入的密码不一致');
+      setError('The passwords entered do not match');
       setLoading(false);
       return;
     }
 
     try {
-      // 准备发送到API的数据（不包含confirmPassword）
+      // Prepare data to send to API (excluding confirmPassword)
       const apiData = {
         username: formData.username,
         password: formData.password,
@@ -42,20 +42,20 @@ const Register = () => {
       };
 
       const response = await api.post('/user/register', apiData);
-      console.log('注册响应:', response);
+      console.log('Registration response:', response);
       
-      // 检查响应是否成功
+      // Check if response is successful
       if (response.code !== 1) {
-        const errorMsg = response.msg || '注册失败，请稍后重试';
+        const errorMsg = response.msg || 'Registration failed, please try again later';
         setError(errorMsg);
         return;
       }
       
-      // 注册成功，跳转到登录页
-      navigate('/login', { state: { message: '注册成功，请登录' } });
+      // Registration successful, redirect to login page
+      navigate('/login', { state: { message: 'Registration successful, please login' } });
     } catch (err) {
-      console.error('注册失败:', err);
-      setError(err.response?.data?.message || '注册失败，请稍后重试');
+      console.error('Registration failed:', err);
+      setError(err.response?.data?.message || 'Registration failed, please try again later');
     } finally {
       setLoading(false);
     }
@@ -66,12 +66,12 @@ const Register = () => {
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-md">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            注册新账户
+            Register New Account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            或{' '}
+            Or{' '}
             <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
-              返回登录
+              Return to Login
             </Link>
           </p>
         </div>
@@ -86,7 +86,7 @@ const Register = () => {
           <div className="rounded-md shadow-sm space-y-4">
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                用户名
+                Username
               </label>
               <input
                 id="username"
@@ -94,7 +94,7 @@ const Register = () => {
                 type="text"
                 required
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="请输入用户名"
+                placeholder="Please enter username"
                 value={formData.username}
                 onChange={handleChange}
               />
@@ -102,7 +102,7 @@ const Register = () => {
             
             <div>
               <label htmlFor="realName" className="block text-sm font-medium text-gray-700 mb-1">
-                真实姓名
+                Real Name
               </label>
               <input
                 id="realName"
@@ -110,7 +110,7 @@ const Register = () => {
                 type="text"
                 required
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="请输入真实姓名"
+                placeholder="Please enter real name"
                 value={formData.realName}
                 onChange={handleChange}
               />
@@ -118,7 +118,7 @@ const Register = () => {
             
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                密码
+                Password
               </label>
               <input
                 id="password"
@@ -126,7 +126,7 @@ const Register = () => {
                 type="password"
                 required
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="请输入密码"
+                placeholder="Please enter password"
                 value={formData.password}
                 onChange={handleChange}
               />
@@ -134,7 +134,7 @@ const Register = () => {
             
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                确认密码
+                Confirm Password
               </label>
               <input
                 id="confirmPassword"
@@ -142,7 +142,7 @@ const Register = () => {
                 type="password"
                 required
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="请再次输入密码"
+                placeholder="Please enter password again"
                 value={formData.confirmPassword}
                 onChange={handleChange}
               />
@@ -161,9 +161,9 @@ const Register = () => {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  注册中...
+                  Registering...
                 </span>
-              ) : '注册'}
+              ) : 'Register'}
             </button>
           </div>
         </form>

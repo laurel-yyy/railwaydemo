@@ -32,9 +32,6 @@ public class CacheAutoConfiguration {
 
     private final RedisDistributedProperties redisDistributedProperties;
 
-    /**
-     * 创建 Redis Key 序列化器，可自定义 Key Prefix
-     */
     @Bean
     public RedisKeySerializer redisKeySerializer() {
         String prefix = redisDistributedProperties.getPrefix();
@@ -42,9 +39,6 @@ public class CacheAutoConfiguration {
         return new RedisKeySerializer(prefix, prefixCharset);
     }
 
-    /**
-     * 防止缓存穿透的布隆过滤器
-     */
     @Bean
     public RBloomFilter<String> cachePenetrationBloomFilter(RedissonClient redissonClient, BloomFilterPenetrateProperties bloomFilterPenetrateProperties) {
         RBloomFilter<String> cachePenetrationBloomFilter = redissonClient.getBloomFilter(bloomFilterPenetrateProperties.getName());
@@ -53,7 +47,6 @@ public class CacheAutoConfiguration {
     }
 
     @Bean
-    // 静态代理模式: Redis 客户端代理类增强
     public StringRedisTemplateProxy stringRedisTemplateProxy(RedisKeySerializer redisKeySerializer,
                                                              StringRedisTemplate stringRedisTemplate,
                                                              RedissonClient redissonClient) {

@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ourgroup.railway.model.dto.req.CancelTicketOrderReqDTO;
+import com.ourgroup.railway.model.dto.req.ChangeTicketOrderReqDTO;
 import com.ourgroup.railway.model.dto.req.TicketOrderCreateReqDTO;
 import com.ourgroup.railway.model.dto.req.TicketOrderItemQueryReqDTO;
 import com.ourgroup.railway.model.dto.req.TicketOrderPageQueryReqDTO;
@@ -41,14 +41,6 @@ public class TicketOrderController {
         return Results.success(orderService.queryTicketOrderByOrderSn(orderSn));
     }
 
-    // /**
-    //  * Query ticket item details by item record ID
-    //  */
-    // @GetMapping("/api/order-service/order/item/ticket/query")
-    // public Result<List<TicketOrderPassengerDetailRespDTO>> queryTicketItemOrderById(TicketOrderItemQueryReqDTO requestParam) {
-    //     return Results.success(orderItemService.queryTicketItemOrderById(requestParam));
-    // }
-
     /**
      * Page query ticket orders
      */
@@ -76,16 +68,16 @@ public class TicketOrderController {
     /**
      * Close ticket order
      */
-    @PostMapping("/api/order-service/order/ticket/close")
-    public Result<Boolean> closeTickOrder(CancelTicketOrderReqDTO requestParam) {
-        return Results.success(orderService.closeTickOrder(requestParam));
+    @PostMapping("/api/order-service/order/ticket/pay")
+    public Result<Boolean> payTickOrder(ChangeTicketOrderReqDTO requestParam) {
+        return Results.success(orderService.payTickOrder(requestParam));
     }
 
     /**
      * Cancel ticket order
      */
     @PostMapping("/api/order-service/order/ticket/cancel")
-    public Result<Boolean> cancelTickOrder( CancelTicketOrderReqDTO requestParam) {
+    public Result<Boolean> cancelTickOrder(ChangeTicketOrderReqDTO requestParam) {
         return Results.success(orderService.cancelTickOrder(requestParam));
     }
 }

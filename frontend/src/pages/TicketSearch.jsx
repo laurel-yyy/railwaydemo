@@ -4,19 +4,19 @@ import api from '../utils/axios';
 
 const TicketSearch = () => {
   const navigate = useNavigate();
-  // 查询参数状态
+  // Search parameters state
   const [searchParams, setSearchParams] = useState({
     fromStation: 'New York',
     toStation: 'San Francisco',
     departureDate: '2025-06-01',
   });
 
-  // 查询结果状态
+  // Search result state
   const [searchResult, setSearchResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // 处理输入变化
+  // Handle input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setSearchParams({
@@ -25,65 +25,65 @@ const TicketSearch = () => {
     });
   };
 
-  // 处理表单提交
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     
-    // 确保两个站点都已输入
+    // Ensure both stations are entered
     if (!searchParams.fromStation || !searchParams.toStation) {
-      setError('请输入出发站和到达站');
+      setError('Please enter departure and arrival stations');
       setLoading(false);
       return;
     }
 
     try {
-      // 构建查询参数 - 使用与TicketPageQueryReqDTO匹配的结构
+      // Build query parameters - use structure matching TicketPageQueryReqDTO
       const queryParams = {
         fromStation: searchParams.fromStation,
         toStation: searchParams.toStation,
         departureDate: searchParams.departureDate,
-        departure: searchParams.fromStation,  // 确保这些字段也包含在请求中
+        departure: searchParams.fromStation,  // Ensure these fields are also included in the request
         arrival: searchParams.toStation
       };
 
-      console.log('发送查询请求，参数:', queryParams);
+      console.log('Sending query request, parameters:', queryParams);
 
-      // 使用GET请求，参数作为URL参数传递
+      // Use GET request, parameters passed as URL parameters
       const response = await api.get('/ticket/query', { params: queryParams });
-      console.log('查询响应:', response);
+      console.log('Query response:', response);
 
-      // 检查响应
+      // Check response
       if (response.code !== 1 || !response.data) {
-        throw new Error(response.msg || '查询失败');
+        throw new Error(response.msg || 'Query failed');
       }
 
-      // 设置查询结果
+      // Set query result
       setSearchResult(response.data);
     } catch (err) {
-      console.error('查询失败:', err);
+      console.error('Query failed:', err);
       
-      // 提取更详细的错误信息
-      let errorMsg = '查询失败，请稍后重试';
+      // Extract more detailed error information
+      let errorMsg = 'Query failed, please try again later';
       
       if (err.response) {
-        // 服务器返回错误响应
-        console.error('错误状态码:', err.response.status);
-        console.error('错误数据:', err.response.data);
+        // Server returned error response
+        console.error('Error status code:', err.response.status);
+        console.error('Error data:', err.response.data);
         
         if (err.response.status === 500) {
-          errorMsg = '服务器内部错误，请联系管理员';
+          errorMsg = 'Internal server error, please contact administrator';
         } else {
           errorMsg = err.response.data?.message || errorMsg;
         }
       } else if (err.request) {
-        // 请求已发送但没有收到响应
-        console.error('未收到响应:', err.request);
-        errorMsg = '未收到服务器响应，请检查网络连接';
+        // Request was made but no response received
+        console.error('No response received:', err.request);
+        errorMsg = 'No server response received, please check network connection';
       } else {
-        // 请求设置错误
-        console.error('请求错误:', err.message);
+        // Request setup error
+        console.error('Request error:', err.message);
         errorMsg = err.message || errorMsg;
       }
       
@@ -93,58 +93,62 @@ const TicketSearch = () => {
     }
   };
 
-  // 获取座位类型的名称
+  // Get seat class name
   const getSeatClassName = (type) => {
     const seatClassNames = {
-      0: '商务座',
-      1: '一等座',
-      2: '二等座',
-      3: '硬卧',
-      4: '软卧',
-      5: '硬座',
-      13: '动卧',
+      0: 'Business Class',
+      1: 'First Class',
+      2: 'Second Class',
+      3: 'Hard Sleeper',
+      4: 'Soft Sleeper',
+      5: 'Hard Seat',
+      13: 'Moving Sleeper',
     };
-    return seatClassNames[type] || `类型${type}`;
+    return seatClassNames[type] || `Type ${type}`;
   };
 
-  // 获取销售状态
+  // Get sale status text
   const getSaleStatusText = (status) => {
     const statusMap = {
-      0: '未开售',
-      1: '可预订',
-      2: '已售完',
-      3: '已停售',
+      0: 'Not On Sale',
+      1: 'Available',
+      2: 'Sold Out',
+      3: 'Sale Suspended',
     };
-    return statusMap[status] || '未知状态';
+    return statusMap[status] || 'Unknown Status';
   };
 
-  // 获取销售状态的样式
+  // Get sale status style
   const getSaleStatusStyle = (status) => {
     switch (status) {
-      case 0: // 未开售
+      case 0: // Not On Sale
         return 'text-gray-500';
-      case 1: // 可预订
+      case 1: // Available
         return 'text-green-600 font-semibold';
-      case 2: // 已售完
+      case 2: // Sold Out
         return 'text-red-600';
-      case 3: // 已停售
+      case 3: // Sale Suspended
         return 'text-gray-500';
       default:
         return 'text-gray-500';
     }
   };
 
-  // 处理购票
+  const handleReturnHome = () => {
+    navigate('/');
+  };
+
+  // Handle ticket purchase
   const handlePurchase = (train, seatType) => {
-    // 确保用户已登录
+    // Ensure user is logged in
     const token = localStorage.getItem('accessToken');
     if (!token) {
-      alert('请先登录');
+      alert('Please login first');
       navigate('/login');
       return;
     }
 
-    // 构建购票页面的查询参数
+    // Build query parameters for the purchase page
     const queryParams = new URLSearchParams({
       trainId: train.trainId,
       trainNumber: train.trainNumber,
@@ -156,21 +160,29 @@ const TicketSearch = () => {
       price: seatType.price
     });
 
-    // 跳转到购票页面
+    // Navigate to purchase page
     navigate(`/ticket-purchase?${queryParams.toString()}`);
   };
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">车票查询</h1>
+      <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-800">Ticket Search</h1>
+          <button
+            onClick={handleReturnHome}
+            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+          >
+            Return to Home
+          </button>
+        </div>
         
-        {/* 搜索表单 */}
+        {/* Search Form */}
         <div className="bg-white p-6 rounded-lg shadow-md mb-6">
           <form onSubmit={handleSubmit} className="flex flex-wrap gap-4">
             <div className="flex-1 min-w-[200px]">
               <label htmlFor="fromStation" className="block text-sm font-medium text-gray-700 mb-1">
-                出发站
+                Departure Station
               </label>
               <input
                 type="text"
@@ -179,13 +191,13 @@ const TicketSearch = () => {
                 value={searchParams.fromStation}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="如：New York"
+                placeholder="e.g.: New York"
               />
             </div>
             
             <div className="flex-1 min-w-[200px]">
               <label htmlFor="toStation" className="block text-sm font-medium text-gray-700 mb-1">
-                到达站
+                Arrival Station
               </label>
               <input
                 type="text"
@@ -194,13 +206,13 @@ const TicketSearch = () => {
                 value={searchParams.toStation}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="如：San Francisco"
+                placeholder="e.g.: San Francisco"
               />
             </div>
             
             <div className="flex-1 min-w-[200px]">
               <label htmlFor="departureDate" className="block text-sm font-medium text-gray-700 mb-1">
-                出发日期
+                Departure Date
               </label>
               <input
                 type="date"
@@ -218,53 +230,53 @@ const TicketSearch = () => {
                 disabled={loading}
                 className="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? '查询中...' : '查询'}
+                {loading ? 'Searching...' : 'Search'}
               </button>
             </div>
           </form>
         </div>
         
-        {/* 错误信息 */}
+        {/* Error Message */}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md mb-6">
-            <div className="font-medium">查询错误</div>
+            <div className="font-medium">Search Error</div>
             <div className="mt-1">{error}</div>
           </div>
         )}
         
-        {/* 查询结果 */}
+        {/* Search Results */}
         {searchResult && (
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-800">
                 {searchResult.trainList.length > 0 
-                  ? `${searchParams.fromStation} → ${searchParams.toStation} 的列车` 
-                  : '没有找到匹配的列车'}
+                  ? `Trains from ${searchParams.fromStation} to ${searchParams.toStation}` 
+                  : 'No matching trains found'}
               </h2>
               <p className="text-sm text-gray-600 mt-1">
-                {searchParams.departureDate} · 共找到 {searchResult.trainList.length} 趟列车
+                {searchParams.departureDate} · Found {searchResult.trainList.length} trains
               </p>
             </div>
             
-            {/* 列车列表 */}
+            {/* Train List */}
             <div className="overflow-y-auto max-h-[600px]">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50 sticky top-0">
                   <tr>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      车次
+                      Train Number
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      出发/到达
+                      Departure/Arrival
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      历时
+                      Duration
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      座位信息
+                      Seat Information
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      状态
+                      Status
                     </th>
                   </tr>
                 </thead>
@@ -285,7 +297,7 @@ const TicketSearch = () => {
                             <span className="ml-2 text-sm text-gray-500">{train.arrival}</span>
                             {train.daysArrived > 0 && (
                               <span className="ml-2 text-xs px-1 bg-gray-200 rounded-sm">
-                                +{train.daysArrived}天
+                                +{train.daysArrived} days
                               </span>
                             )}
                           </div>
@@ -301,7 +313,7 @@ const TicketSearch = () => {
                               <span className="text-sm font-medium text-gray-900">{getSeatClassName(seat.type)}</span>
                               <div className="flex items-center">
                                 <span className="text-sm text-gray-600 mr-3">
-                                  {seat.quantity > 0 ? `${seat.quantity}张` : '无票'}
+                                  {seat.quantity > 0 ? `${seat.quantity} tickets` : 'No tickets'}
                                 </span>
                                 <span className="text-sm font-medium text-orange-600 mr-3">¥{seat.price}</span>
                                 {train.saleStatus === 1 && seat.quantity > 0 && (
@@ -309,7 +321,7 @@ const TicketSearch = () => {
                                     onClick={() => handlePurchase(train, seat)}
                                     className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none"
                                   >
-                                    购票
+                                    Purchase
                                   </button>
                                 )}
                               </div>
@@ -322,7 +334,7 @@ const TicketSearch = () => {
                           {getSaleStatusText(train.saleStatus)}
                         </div>
                         <div className="text-xs text-gray-500 mt-1">
-                          开售: {train.saleTime}
+                          On sale: {train.saleTime}
                         </div>
                       </td>
                     </tr>

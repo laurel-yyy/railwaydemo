@@ -9,12 +9,12 @@ import com.ourgroup.railway.model.dto.domain.RouteDTO;
 public final class StationCalculateUtil {
 
     /**
-     * 计算出发站和终点站中间的站点（包含出发站和终点站）
+     * Calculate the stations between the departure station and the destination station.
      *
-     * @param stations     所有站点数据
-     * @param startStation 出发站
-     * @param endStation   终点站
-     * @return 出发站和终点站中间的站点（包含出发站和终点站）
+     * @param stations     all stations data
+     * @param startStation departure station
+     * @param endStation   destination station
+     * @return the stations between the departure station and the destination station
      */
     public static List<RouteDTO> throughStation(List<String> stations, String startStation, String endStation) {
         List<RouteDTO> routesToDeduct = new ArrayList<>();
@@ -35,12 +35,12 @@ public final class StationCalculateUtil {
     }
 
     /**
-     * 计算出发站和终点站需要扣减余票的站点（包含出发站和终点站）
+     * Calculate the stations that need to be deducted between the departure station and the destination station.
      *
-     * @param stations     所有站点数据
-     * @param startStation 出发站
-     * @param endStation   终点站
-     * @return 出发站和终点站需要扣减余票的站点（包含出发站和终点站）
+     * @param stations     all stations data
+     * @param startStation departure station
+     * @param endStation   destination station
+     * @return the stations that need to be deducted between the departure station and the destination station
      */
     public static List<RouteDTO> takeoutStation(List<String> stations, String startStation, String endStation) {
         List<RouteDTO> takeoutStationList = new ArrayList<>();
@@ -64,10 +64,4 @@ public final class StationCalculateUtil {
         return takeoutStationList;
     }
 
-    public static void main(String[] args) {
-        List<String> stations = Arrays.asList("北京南", "济南西", "南京南", "杭州东", "宁波");
-        String startStation = "北京南";
-        String endStation = "南京南";
-        StationCalculateUtil.takeoutStation(stations, startStation, endStation).forEach(System.out::println);
-    }
 }

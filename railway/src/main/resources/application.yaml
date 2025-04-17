@@ -56,12 +56,11 @@ spring:
             key-generator-strategy:
               column: id
               key-generator-name: snowflake
-           # 新增订单表分片配置
           t_order:
             actual-data-nodes: ds0.t_order_$->{0..15}
             table-strategy:
               standard:
-                sharding-column: user_id  # 使用用户ID作为分片键
+                sharding-column: user_id 
                 sharding-algorithm-name: order_inline
             key-generator-strategy:
               column: id
@@ -72,7 +71,6 @@ spring:
             type: INLINE
             props:
               algorithm-expression: t_user_$->{id % 16}
-          # 新增订单表分片算法
           order_inline:
             type: INLINE
             props:

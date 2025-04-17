@@ -4,18 +4,9 @@ import com.alibaba.fastjson2.util.ParameterizedTypeImpl;
 
 import java.lang.reflect.Type;
 
-/**
- * FastJson2 工具类
- * 公众号：马丁玩编程，回复：加群，添加马哥微信（备注：12306）获取项目资料
- */
+
 public final class FastJson2Util {
 
-    /**
-     * 构建类型
-     *
-     * @param types
-     * @return
-     */
     public static Type buildType(Type... types) {
         ParameterizedTypeImpl beforeType = null;
         if (types != null && types.length > 0) {

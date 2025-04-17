@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CancelTicketOrderReqDTO {
+public class ChangeTicketOrderReqDTO {
 
     /**
      * 订单号

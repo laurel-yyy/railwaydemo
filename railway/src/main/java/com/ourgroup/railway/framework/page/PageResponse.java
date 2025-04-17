@@ -21,22 +21,22 @@ public class PageResponse<T> implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 当前页
+     * current page number
      */
     private Long current;
 
     /**
-     * 每页显示条数
+     * page size
      */
     private Long size = 10L;
 
     /**
-     * 总数
+     * total page number
      */
     private Long total;
 
     /**
-     * 查询数据列表
+     * total record number
      */
     private List<T> records = Collections.emptyList();
 

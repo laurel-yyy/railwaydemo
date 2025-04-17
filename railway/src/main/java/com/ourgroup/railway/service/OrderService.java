@@ -1,11 +1,12 @@
 package com.ourgroup.railway.service;
 
-import com.ourgroup.railway.model.dto.req.CancelTicketOrderReqDTO;
+import com.ourgroup.railway.model.dto.req.ChangeTicketOrderReqDTO;
 import com.ourgroup.railway.model.dto.req.TicketOrderCreateReqDTO;
 import com.ourgroup.railway.model.dto.req.TicketOrderPageQueryReqDTO;
 import com.ourgroup.railway.model.dto.req.TicketOrderSelfPageQueryReqDTO;
 import com.ourgroup.railway.model.dto.resp.TicketOrderDetailRespDTO;
 import com.ourgroup.railway.model.dto.resp.TicketOrderDetailSelfRespDTO;
+import com.google.protobuf.ServiceException;
 import com.ourgroup.railway.framework.convention.page.PageResponse;
 
 /**
@@ -26,6 +27,7 @@ public interface OrderService {
      *
      * @param requestParam page query parameters
      * @return paged order details
+     * @throws ServiceException 
      */
     PageResponse<TicketOrderDetailRespDTO> pageTicketOrder(TicketOrderPageQueryReqDTO requestParam);
 
@@ -43,7 +45,7 @@ public interface OrderService {
      * @param requestParam order closing parameters
      * @return operation result
      */
-    boolean closeTickOrder(CancelTicketOrderReqDTO requestParam);
+    boolean payTickOrder(ChangeTicketOrderReqDTO requestParam);
 
     /**
      * Cancel ticket order
@@ -51,7 +53,7 @@ public interface OrderService {
      * @param requestParam order cancellation parameters
      * @return operation result
      */
-    boolean cancelTickOrder(CancelTicketOrderReqDTO requestParam);
+    boolean cancelTickOrder(ChangeTicketOrderReqDTO requestParam);
 
     /**
      * Query self ticket orders

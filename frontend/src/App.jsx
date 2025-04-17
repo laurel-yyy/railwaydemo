@@ -5,6 +5,7 @@ import Register from './pages/Register';
 import Home from './pages/Home';
 import TicketSearch from './pages/TicketSearch';
 import TicketPurchase from './pages/TicketPurchase';
+import Orders from './pages/Orders'; // 添加这一行
 import './index.css';
 
 // 检查用户是否已登录
@@ -52,6 +53,16 @@ function App() {
           element={
             <ProtectedRoute>
               <TicketPurchase />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* 添加订单路由 */}
+        <Route 
+          path="/orders" 
+          element={
+            <ProtectedRoute>
+              <Orders />
             </ProtectedRoute>
           } 
         />

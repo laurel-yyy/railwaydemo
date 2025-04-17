@@ -1,23 +1,23 @@
 import axios from 'axios';
 
-// 创建axios实例
+// Create axios instance
 const instance = axios.create({
-  baseURL: 'http://localhost:8080/api', // 确保基础URL与后端匹配
+  baseURL: 'http://localhost:8080/api', // Ensure base URL matches backend
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
-// 请求拦截器
+// Request interceptor
 instance.interceptors.request.use(
   config => {
-    console.log('发送请求:', config);
+    console.log('Sending request:', config);
     
-    // 从localStorage获取token
+    // Get token from localStorage
     const token = localStorage.getItem('accessToken');
     
-    // 如果有token则添加到请求头
+    // Add token to request header if exists
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
@@ -25,60 +25,60 @@ instance.interceptors.request.use(
     return config;
   },
   error => {
-    console.error('请求错误:', error);
+    console.error('Request error:', error);
     return Promise.reject(error);
   }
 );
 
-// 响应拦截器
+// Response interceptor
 instance.interceptors.response.use(
   response => {
-    console.log('API响应原始数据:', response);
+    console.log('API original response data:', response);
     
-    // 直接返回响应数据
+    // Return response data directly
     return response.data;
   },
   error => {
-    console.error('API响应错误:', error);
+    console.error('API response error:', error);
     
     if (error.response) {
-      // 服务器返回了错误状态码
-      console.error('错误状态码:', error.response.status);
-      console.error('错误数据:', error.response.data);
+      // Server returned an error status code
+      console.error('Error status code:', error.response.status);
+      console.error('Error data:', error.response.data);
       
       switch (error.response.status) {
-        case 401: // 未授权
-          // 清除token并跳转到登录页
+        case 401: // Unauthorized
+          // Clear token and redirect to login page
           localStorage.removeItem('accessToken');
           window.location.href = '/login';
           break;
           
-        case 403: // 禁止访问
-          console.error('没有权限访问此资源');
+        case 403: // Forbidden
+          console.error('No permission to access this resource');
           break;
           
-        case 404: // 资源不存在
-          console.error('请求的资源不存在');
+        case 404: // Resource not found
+          console.error('Requested resource does not exist');
           break;
           
-        case 500: // 服务器错误
-          console.error('服务器错误');
+        case 500: // Server error
+          console.error('Server error');
           break;
           
         default:
-          console.error(`请求错误: ${error.response.status}`);
+          console.error(`Request error: ${error.response.status}`);
       }
       
-      // 返回错误响应中的数据
+      // Return data from error response
       return Promise.reject(error);
     } else if (error.request) {
-      // 请求已发送但没有收到响应
-      console.error('未收到服务器响应，请检查网络连接');
-      return Promise.reject({ msg: '网络连接错误，请检查您的网络' });
+      // Request was sent but no response received
+      console.error('No server response received, please check network connection');
+      return Promise.reject({ msg: 'Network connection error, please check your network' });
     } else {
-      // 请求配置错误
-      console.error('请求配置错误', error.message);
-      return Promise.reject({ msg: '请求配置错误' });
+      // Request configuration error
+      console.error('Request configuration error', error.message);
+      return Promise.reject({ msg: 'Request configuration error' });
     }
   }
 );
