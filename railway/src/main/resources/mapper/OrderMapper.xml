@@ -13,10 +13,10 @@
         <result property="trainNumber" column="train_number"/>
         <result property="departure" column="departure"/>
         <result property="arrival" column="arrival"/>
-        <result property="source" column="source"/>
+        <!-- <result property="source" column="source"/> -->
         <result property="status" column="status"/>
         <result property="orderTime" column="order_time"/>
-        <result property="payType" column="pay_type"/>
+        <!-- <result property="payType" column="pay_type"/> -->
         <result property="payTime" column="pay_time"/>
         <result property="ridingDate" column="riding_date"/>
         <result property="departureTime" column="departure_time"/>
@@ -73,7 +73,7 @@
     </select>
     
     <!-- Find orders by user ID -->
-    <select id="findByUserId" parameterType="java.lang.String" resultMap="orderResultMap">
+    <select id="findByUserId" parameterType="java.lang.Long" resultMap="orderResultMap">
         SELECT * FROM t_order WHERE user_id = #{userId} ORDER BY create_time DESC
     </select>
     
