@@ -1,36 +1,8 @@
-# version: '3.8'
-
-# services:
-#   mysql:
-#     image: amd64/mysql:5.7.36
-#     container_name: mysql_railwaydemo
-#     platform: linux/amd64
-#     environment:
-#       MYSQL_ROOT_HOST: '%'
-#       MYSQL_ROOT_PASSWORD: root
-#     ports:
-#       - "3390:3306"
-#     restart: unless-stopped
-
 mybatis:
   mapper-locations: classpath:mapper/*.xml
   type-aliases-package: com.ourgroup.railway.model.dao
   configuration:
     map-underscore-to-camel-case: true
-
-# spring:
-#   datasource:
-#     url: jdbc:mysql://localhost:3306/railway?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8
-#     username: root
-#     password: 123456
-#     driver-class-name: com.mysql.cj.jdbc.Driver
-
-# spring:
-#   datasource:
-#     url: jdbc:mysql://localhost:3306/railway?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
-#     username: root
-#     password: 12345678
-#     driver-class-name: com.mysql.cj.jdbc.Driver
 
 spring:
   shardingsphere:
@@ -41,7 +13,7 @@ spring:
       ds0:
         type: com.zaxxer.hikari.HikariDataSource
         driver-class-name: com.mysql.cj.jdbc.Driver
-        url: jdbc:mysql://localhost:3306/railway?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
+        url: jdbc:mysql://mysql:3306/railway?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
         username: root
         password: 123456
     rules:
@@ -60,12 +32,11 @@ spring:
             actual-data-nodes: ds0.t_order_$->{0..15}
             table-strategy:
               standard:
-                sharding-column: user_id 
+                sharding-column: user_id
                 sharding-algorithm-name: order_inline
             key-generator-strategy:
               column: id
               key-generator-name: snowflake
-
         sharding-algorithms:
           user_inline:
             type: INLINE
@@ -75,17 +46,16 @@ spring:
             type: INLINE
             props:
               algorithm-expression: t_order_$->{user_id % 16}
-              
         key-generators:
           snowflake:
             type: SNOWFLAKE
             props:
               worker-id: 1
               center-id: 1
-
-  data:            
+  
+  data:
     redis:
-      host: localhost
+      host: redis
       port: 6379
       database: 0
       timeout: 5000ms
@@ -98,10 +68,7 @@ spring:
 
 logging:
   level:
-    org.apache.shardingsphere: DEBUG
+    org.apache.shardingsphere: INFO
     com.ourgroup.railway: DEBUG
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
-
-
-
+  file:
+    name: /app/logs/application.log

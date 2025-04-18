@@ -69,8 +69,6 @@ public class OrderServiceImpl implements OrderService {
         // This would typically use pagination in a real implementation
         // For simplicity, we'll just fetch all orders matching the criteria
         
-        // In a real implementation, you would use requestParam.getCurrent() and requestParam.getSize()
-        // to implement proper pagination with database LIMIT and OFFSET
         String authHeader = request.getHeader("Authorization");
         String userId1 = null;
     
@@ -84,8 +82,6 @@ public class OrderServiceImpl implements OrderService {
         
         for (OrderDO orderDO : orderList) {
             TicketOrderDetailRespDTO detailDTO = convertToOrderDetailDTO(orderDO);
-            // List<OrderItemDO> orderItemList = orderItemMapper.findByOrderSn(orderDO.getOrderSn());
-            // detailDTO.setPassengerDetails(convertToPassengerDetailList(orderItemList));
             resultList.add(detailDTO);
         }
         
@@ -105,18 +101,11 @@ public class OrderServiceImpl implements OrderService {
         String orderSn = generateOrderSn();
         Date now = new Date();
         
-        // 在创建订单前添加非空检查
+        // Check before get userid
         if (requestParam.getUserId() == null) {
             throw new IllegalArgumentException("User ID cannot be null for sharding");
         }
-
-        // 添加日志记录
-        log.info("Raw requestParam object: {}", requestParam);
-        log.info("UserId from requestParam: {}", requestParam.getUserId());
-        log.info("ToString result: {}", requestParam.toString());
-        log.info("Creating order with userId: {}", requestParam.getUserId());
-    
-        
+            
         // Create order
         OrderDO orderDO = new OrderDO();
         orderDO.setOrderSn(orderSn);
@@ -126,7 +115,6 @@ public class OrderServiceImpl implements OrderService {
         orderDO.setTrainNumber(requestParam.getTrainNumber());
         orderDO.setDeparture(requestParam.getDeparture());
         orderDO.setArrival(requestParam.getArrival());
-        // orderDO.setSource(requestParam.getSource() != null ? requestParam.getSource() : 1);
         orderDO.setStatus(0); // Pending payment
         orderDO.setOrderTime(now);
         orderDO.setRidingDate(requestParam.getRidingDate());
@@ -136,48 +124,7 @@ public class OrderServiceImpl implements OrderService {
         orderDO.setUpdateTime(now);
         
         orderMapper.insert(orderDO);
-        
-        // Create order items and passenger relations
-        // List<TicketOrderItemCreateReqDTO> ticketOrderItems = requestParam.getTicketOrderItems();
-        // if (ticketOrderItems != null && !ticketOrderItems.isEmpty()) {
-        //     for (TicketOrderItemCreateReqDTO item : ticketOrderItems) {
-        //         // Create order item
-        //         OrderItemDO orderItemDO = new OrderItemDO();
-        //         orderItemDO.setOrderSn(orderSn);
-        //         orderItemDO.setUserId(requestParam.getUserId());
-        //         orderItemDO.setUsername(requestParam.getUsername());
-        //         orderItemDO.setTrainId(requestParam.getTrainId());
-        //         orderItemDO.setCarriageNumber(item.getCarriageNumber());
-        //         orderItemDO.setSeatType(item.getSeatType());
-        //         orderItemDO.setSeatNumber(item.getSeatNumber());
-        //         orderItemDO.setRealName(item.getRealName());
-        //         orderItemDO.setIdType(item.getIdType());
-        //         orderItemDO.setIdCard(item.getIdCard());
-        //         orderItemDO.setPhone(item.getPhone());
-        //         orderItemDO.setStatus(0); // Normal
-        //         orderItemDO.setAmount(item.getAmount());
-        //         orderItemDO.setTicketType(item.getTicketType());
-        //         orderItemDO.setCreateTime(now);
-        //         orderItemDO.setUpdateTime(now);
                 
-        //         orderItemMapper.insert(orderItemDO);
-                
-        //         // Create passenger relation
-        //         OrderItemPassengerDO passengerDO = new OrderItemPassengerDO();
-        //         passengerDO.setOrderSn(orderSn);
-        //         passengerDO.setIdType(item.getIdType());
-        //         passengerDO.setIdCard(item.getIdCard());
-        //         passengerDO.setCreateTime(now);
-        //         passengerDO.setUpdateTime(now);
-                
-        //         // In a real implementation, you would save the passenger relation
-        //         // For now, we'll leave this as a placeholder since we didn't implement the repo method
-        //     }
-        // }
-        
-        // In a real implementation, you might want to send a delayed message to close the order
-        // if it's not paid within a certain timeframe
-        
         return orderSn;
     }
 
@@ -245,10 +192,8 @@ public class OrderServiceImpl implements OrderService {
         dto.setTrainNumber(orderDO.getTrainNumber());
         dto.setDeparture(orderDO.getDeparture());
         dto.setArrival(orderDO.getArrival());
-        // dto.setSource(orderDO.getSource());
         dto.setStatus(orderDO.getStatus());
         dto.setOrderTime(orderDO.getOrderTime());
-        // dto.setPayType(orderDO.getPayType());
         dto.setPayTime(orderDO.getPayTime());
         dto.setRidingDate(orderDO.getRidingDate());
         dto.setDepartureTime(orderDO.getDepartureTime());
@@ -259,26 +204,5 @@ public class OrderServiceImpl implements OrderService {
         return dto;
     }
     
-    // private List<TicketOrderPassengerDetailRespDTO> convertToPassengerDetailList(List<OrderItemDO> orderItems) {
-    //     List<TicketOrderPassengerDetailRespDTO> result = new ArrayList<>();
-        
-    //     for (OrderItemDO orderItem : orderItems) {
-    //         TicketOrderPassengerDetailRespDTO dto = new TicketOrderPassengerDetailRespDTO();
-    //         dto.setId(orderItem.getId());
-    //         dto.setRealName(orderItem.getRealName());
-    //         dto.setIdType(orderItem.getIdType());
-    //         dto.setIdCard(orderItem.getIdCard());
-    //         // dto.setPhone(orderItem.getPhone());
-    //         dto.setSeatType(orderItem.getSeatType());
-    //         dto.setCarriageNumber(orderItem.getCarriageNumber());
-    //         dto.setSeatNumber(orderItem.getSeatNumber());
-    //         dto.setAmount(orderItem.getAmount());
-    //         dto.setTicketType(orderItem.getTicketType());
-    //         dto.setStatus(orderItem.getStatus());
-            
-    //         result.add(dto);
-    //     }
-        
-    //     return result;
-    // }
+  
 }

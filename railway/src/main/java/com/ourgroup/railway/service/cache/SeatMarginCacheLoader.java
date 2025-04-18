@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.slf4j.Logger;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -26,9 +27,11 @@ import com.ourgroup.railway.service.TrainStationService;
 import com.ourgroup.railway.framework.constant.RedisKeyConstant;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class SeatMarginCacheLoader {
 
     private final TrainMapper trainMapper;
@@ -46,7 +49,7 @@ public class SeatMarginCacheLoader {
         try {
             StringRedisTemplate stringRedisTemplate = (StringRedisTemplate) distributedCache.getInstance();
             Object quantityObj = stringRedisTemplate.opsForHash().get(RedisKeyConstant.TRAIN_STATION_REMAINING_TICKET + keySuffix, seatType);
-            if (CacheUtil.isNullOrBlank(quantityObj)) {
+            if (CacheUtil.isNullOrBlank(quantityObj) || "0".equals(String.valueOf(quantityObj))) {
                 TrainDO trainDO = distributedCache.safeGet(
                     RedisKeyConstant.TRAIN_INFO + trainId,
                         TrainDO.class,
@@ -54,7 +57,11 @@ public class SeatMarginCacheLoader {
                         RailwayConstant.ADVANCE_TICKET_DAY,
                         TimeUnit.DAYS
                 );
+                
+
                 List<RouteDTO> routeDTOList = trainStationService.listTrainStationRoute(trainId, trainDO.getStartStation(), trainDO.getEndStation());
+                log.info("trainId={}, routeDTOList size={}", trainId, routeDTOList != null ? routeDTOList.size() : 0);
+
                 if (!CollectionUtils.isEmpty(routeDTOList)) {
 
                     for (RouteDTO each : routeDTOList) {
@@ -90,12 +97,19 @@ public class SeatMarginCacheLoader {
 
     private String selectSeatMargin(String trainId, Integer type, String departure, String arrival) {
 
+        // 执行查询前记录日志
+        log.info("执行SQL查询座位余量");
         Integer count = seatMapper.countAvailableSeats(
                 Long.parseLong(trainId), 
                 type, 
                 SeatStatusEnum.AVAILABLE.getCode(), 
                 departure, 
                 arrival);
+        log.info("SQL查询完成: count={}", count);
+        
+        // 在selectSeatMargin方法中添加
+        log.info("查询座位余量: trainId={}, type={}, departure={}, arrival={}, count={}", 
+        trainId, type, departure, arrival, count);
         
         return Optional.ofNullable(count)
                 .map(String::valueOf)
