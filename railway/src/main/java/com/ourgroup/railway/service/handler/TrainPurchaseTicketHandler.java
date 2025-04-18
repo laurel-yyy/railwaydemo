@@ -52,6 +52,10 @@ public class TrainPurchaseTicketHandler {
                     String.valueOf(requestParam.getSeatType()), 
                     -1);
             });
+            String keySuffix = String.join("_", trainId, departure, arrival);
+            stringRedisTemplate.opsForHash().increment(TRAIN_STATION_REMAINING_TICKET + keySuffix, 
+                String.valueOf(requestParam.getSeatType()), 
+                +1);
         }
         return actualResult;
     }
@@ -65,7 +69,17 @@ public class TrainPurchaseTicketHandler {
         
         List<String> trainCarriageList = seatService.listUsableCarriageNumber(trainId, seatType, departure, arrival);
         List<Integer> trainStationCarriageRemainingTicket = seatService.listSeatRemainingTicket(trainId, departure, arrival, trainCarriageList);
+        System.out.println("可用车厢列表:");
+        for (String carriage : trainCarriageList) {
+            System.out.print(carriage + " ");
+        }
+        System.out.println();
         
+        System.out.println("各车厢剩余票数:");
+        for (int i = 0; i < trainCarriageList.size(); i++) {
+            System.out.println("车厢 " + trainCarriageList.get(i) + 
+                              ": " + trainStationCarriageRemainingTicket.get(i) + " 张票");
+        }
         int remainingTicketSum = trainStationCarriageRemainingTicket.stream().mapToInt(Integer::intValue).sum();
         if (remainingTicketSum < 1) {
             throw new Exception("站点余票不足，请尝试更换座位类型或选择其它站点");
