@@ -104,10 +104,6 @@ public class TicketServiceImpl implements TicketService{
 
     @Override
     public TicketPageQueryRespDTO pageListQueryTicket(@RequestBody TicketPageQueryReqDTO requestParam) {
-        // 添加日志输出，查看请求参数的值
-        log.info("接收到查询请求参数: fromStation={}, toStation={}, departure={}, arrival={}",
-        requestParam.getFromStation(), requestParam.getToStation(),
-        requestParam.getDeparture(), requestParam.getArrival());
         StringRedisTemplate stringRedisTemplate = (StringRedisTemplate) distributedCache.getInstance();
         
         List<TicketListDTO> ticketList = new ArrayList<>();
@@ -187,9 +183,9 @@ public class TicketServiceImpl implements TicketService{
 
         ticketList.sort(Comparator.comparing(TicketListDTO::getDepartureTime));
 
-        // 查询每个列车的座位和票价信息
+        // search ticket and price
     for (TicketListDTO ticket : ticketList) {
-        // 从缓存获取票价信息
+        // fetch tickets from cache
         String trainStationPriceKey = String.format(RedisKeyConstant.TRAIN_STATION_PRICE, 
                 ticket.getTrainId(), ticket.getDeparture(), ticket.getArrival());
         
@@ -197,7 +193,7 @@ public class TicketServiceImpl implements TicketService{
                 trainStationPriceKey,
                 String.class,
                 () -> {
-                    // 缓存未命中时查询数据库
+                    // search in database while no data in cache
                     List<TrainStationPriceDO> priceList = trainStationPriceMapper.selectByTrainAndStations(
                             Long.parseLong(ticket.getTrainId()), 
                             ticket.getDeparture(), 
@@ -224,40 +220,33 @@ public class TicketServiceImpl implements TicketService{
             priceList = Collections.emptyList();
         }
         
-        // 构建座位类型信息
+        // construct seat info
         List<SeatClassDTO> seatClassList = new ArrayList<>();
         for (TrainStationPriceDO price : priceList) {
             String seatType = String.valueOf(price.getSeatType());
             String keySuffix = String.join("_", ticket.getTrainId(), price.getDeparture(), price.getArrival());
             
-            // 查询余票
+            // remaining seat
             Object quantityObj = stringRedisTemplate.opsForHash().get(
                     RedisKeyConstant.TRAIN_STATION_REMAINING_TICKET + keySuffix, seatType);
-            // 添加调试日志
-            log.info("Redis查询 Key: {}", RedisKeyConstant.TRAIN_STATION_REMAINING_TICKET + keySuffix);
-            log.info("Redis查询 Field: {}", seatType);
-            log.info("Redis查询结果 quantityObj: {}", quantityObj);
-            // 解析余票数量
+
             int quantity = Optional.ofNullable(quantityObj)
                     .map(Object::toString)
                     .map(Integer::parseInt)
+                    .filter(val -> val > 0)
                     .orElseGet(() -> {
-                        // 添加日志，确认是否进入这个方法
-                        logger.info("进入 cacheLoader 加载方法");
-
-                        // 缓存未命中，使用座位缓存加载器加载
                         Map<String, String> seatMarginMap = seatMarginCacheLoader.load(
                                 ticket.getTrainId(), 
                                 seatType, 
                                 price.getDeparture(), 
                                 price.getArrival());
-                        
+
                         return Optional.ofNullable(seatMarginMap.get(seatType))
                                 .map(Integer::parseInt)
                                 .orElse(0);
                     });
             
-            // 构建座位类型DTO，价格单位转换（分->元）
+            // construct dto
             BigDecimal priceValue = new BigDecimal(price.getPrice())
                     .divide(new BigDecimal("100"), 1, RoundingMode.HALF_UP);
             
@@ -268,11 +257,10 @@ public class TicketServiceImpl implements TicketService{
             seatClassList.add(seatClassDTO);
         }
         
-        // 设置座位类型列表
+        // set seatlist
         ticket.setSeatClassList(seatClassList);
     }
 
-    // 构建并返回最终响应结果
     return TicketPageQueryRespDTO.builder()
             .trainList(ticketList)
             .departureStationList(buildDepartureStationList(ticketList))
@@ -293,10 +281,10 @@ public class TicketServiceImpl implements TicketService{
     if (authHeader != null && authHeader.startsWith("Bearer ")) {
         String token = authHeader.substring(7);
         if (JWTUtil.validateToken(token)) {
-            // 从JWT中提取用户ID
+            // get userid from JWT
             userId1 = JWTUtil.getUserIdFromToken(token);
             
-            // 将用户ID设置到requestParam的passengerId字段
+            // set userId to passengerId
             requestParam.setPassengerId(userId1);
         } else {
             throw new ServiceException("Invalid token");
@@ -355,19 +343,18 @@ public class TicketServiceImpl implements TicketService{
         orderCreateReq.setTrainNumber(trainDO.getTrainNumber());
         orderCreateReq.setDeparture(requestParam.getDeparture());
         orderCreateReq.setArrival(requestParam.getArrival());
-        orderCreateReq.setRidingDate(new Date()); // 可能需要根据实际情况调整
+        orderCreateReq.setRidingDate(new Date()); 
         orderCreateReq.setDepartureTime(trainDO.getDepartureTime());
         orderCreateReq.setArrivalTime(trainDO.getArrivalTime());
         
         // Set seat details
+        String passengerId = requestParam.getPassengerId();
+        if (passengerId == null || passengerId.isEmpty()) {
+            throw new IllegalArgumentException("Passenger ID cannot be null or empty");
+        }
         Long userId = Long.parseLong(requestParam.getPassengerId());
         UserDO user = userMapper.selectById(userId);
         
-        // 在创建userid前添加非空检查
-        log.info("UserId before null check: {}", userId);
-        if (userId == null) {
-            throw new IllegalArgumentException("User ID cannot be null for sharding");
-        }
         if (user != null) {
             orderCreateReq.setUserId(userId);
             orderCreateReq.setUsername(user.getUsername());
@@ -447,14 +434,14 @@ public class TicketServiceImpl implements TicketService{
             return 0;
         }
         
-        // 创建日历实例
+        // create date
         Calendar depCal = Calendar.getInstance();
         depCal.setTime(departureTime);
         
         Calendar arrCal = Calendar.getInstance();
         arrCal.setTime(arrivalTime);
         
-        // 获取日期部分（年、月、日）
+        // get date
         int depYear = depCal.get(Calendar.YEAR);
         int depMonth = depCal.get(Calendar.MONTH);
         int depDay = depCal.get(Calendar.DAY_OF_MONTH);
@@ -463,17 +450,17 @@ public class TicketServiceImpl implements TicketService{
         int arrMonth = arrCal.get(Calendar.MONTH);
         int arrDay = arrCal.get(Calendar.DAY_OF_MONTH);
         
-        // 重置时间部分，只保留日期
+        // reset time
         depCal.clear();
         depCal.set(depYear, depMonth, depDay);
         
         arrCal.clear();
         arrCal.set(arrYear, arrMonth, arrDay);
         
-        // 计算日期差（毫秒）
+        // caculate the diff
         long diffMillis = arrCal.getTimeInMillis() - depCal.getTimeInMillis();
         
-        // 转换为天数
+        // turn into day
         return (int)(diffMillis / (24 * 60 * 60 * 1000));
     }
 

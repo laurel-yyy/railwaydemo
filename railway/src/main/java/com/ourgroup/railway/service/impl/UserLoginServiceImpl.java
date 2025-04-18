@@ -53,7 +53,7 @@ public class UserLoginServiceImpl implements UserLoginService {
         List<UserDO> existingUsers = userMapper.findByUsername(requestParam.getUsername());
         
         if (existingUsers != null && !existingUsers.isEmpty()) {
-            throw new RuntimeException("用户名已存在");
+            throw new RuntimeException("User already exists");
         }
 
         String hashedPassword = BCrypt.hashpw(requestParam.getPassword(), BCrypt.gensalt(12));
@@ -68,7 +68,7 @@ public class UserLoginServiceImpl implements UserLoginService {
         try {
             userMapper.insert(newUser); // here the shardingsphere will use snowflake to produce id for user, and put it in sql
         } catch (DuplicateKeyException e) {
-            throw new RuntimeException("注册失败，数据库错误");
+            throw new RuntimeException("Register failed");
         }
 
         // 返回注册响应

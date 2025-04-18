@@ -6,23 +6,22 @@ import com.ourgroup.railway.model.dto.resp.UserLoginRespDTO;
 import com.ourgroup.railway.model.dto.resp.UserRegisterRespDTO;
 
 /**
- * 用户登录和注册服务接口
+ * User Login and Registration Service Interface
  */
 public interface UserLoginService {
-
     /**
-     * 登录功能
+     * Login functionality
      * 
-     * @param requestParam 用户登录请求参数
-     * @return 登录响应结果
+     * @param requestParam User login request parameters
+     * @return Login response result
      */
     UserLoginRespDTO login(UserLoginReqDTO requestParam);
 
     /**
-     * 注册功能
+     * Registration functionality
      * 
-     * @param requestParam 用户注册请求参数
-     * @return 注册响应结果
+     * @param requestParam User registration request parameters
+     * @return Registration response result
      */
     UserRegisterRespDTO register(UserRegisterReqDTO requestParam);
 }
