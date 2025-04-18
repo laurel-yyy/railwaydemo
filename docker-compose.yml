@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./railway
+    container_name: railway-backend
+    ports:
+      - "8080:8080"
+      - "5005:5005"  # 添加调试端口
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+    networks:
+      - railway-network
+    volumes:
+      - ./logs:/app/logs
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: railway-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - railway-network
+
+  mysql:
+    image: mysql:8.0.33
+    container_name: railway-mysql
+    environment:
+    - MYSQL_ROOT_PASSWORD=123456
+    - MYSQL_DATABASE=railway
+    - MYSQL_ROOT_HOST=% # 添加这一行，允许外部访问
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./railway/data:/docker-entrypoint-initdb.d
+    networks:
+      - railway-network
+    command: 
+      - --character-set-server=utf8mb4 
+      - --collation-server=utf8mb4_unicode_ci
+      - --authentication-policy=mysql_native_password # 添加这一行，兼容外部工具
+
+  redis:
+    image: redis:7.0
+    container_name: railway-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - railway-network
+
+networks:
+  railway-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  redis-data:

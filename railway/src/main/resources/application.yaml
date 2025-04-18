@@ -99,6 +99,9 @@ spring:
 logging:
   level:
     org.apache.shardingsphere: DEBUG
+    com.ourgroup.railway: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
 
 
 

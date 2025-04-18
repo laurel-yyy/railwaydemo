@@ -1,0 +1,74 @@
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.ourgroup.railway.model.dao
+  configuration:
+    map-underscore-to-camel-case: true
+
+spring:
+  shardingsphere:
+    props:
+      sql-show: true
+    datasource:
+      names: ds0
+      ds0:
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://mysql:3306/railway?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
+        username: root
+        password: 123456
+    rules:
+      sharding:
+        tables:
+          t_user:
+            actual-data-nodes: ds0.t_user_$->{0..15}
+            table-strategy:
+              standard:
+                sharding-column: id
+                sharding-algorithm-name: user_inline
+            key-generator-strategy:
+              column: id
+              key-generator-name: snowflake
+          t_order:
+            actual-data-nodes: ds0.t_order_$->{0..15}
+            table-strategy:
+              standard:
+                sharding-column: user_id
+                sharding-algorithm-name: order_inline
+            key-generator-strategy:
+              column: id
+              key-generator-name: snowflake
+        sharding-algorithms:
+          user_inline:
+            type: INLINE
+            props:
+              algorithm-expression: t_user_$->{id % 16}
+          order_inline:
+            type: INLINE
+            props:
+              algorithm-expression: t_order_$->{user_id % 16}
+        key-generators:
+          snowflake:
+            type: SNOWFLAKE
+            props:
+              worker-id: 1
+              center-id: 1
+  
+  data:
+    redis:
+      host: redis
+      port: 6379
+      database: 0
+      timeout: 5000ms
+      jedis:
+        pool:
+          max-active: 8
+          max-wait: -1ms
+          max-idle: 8
+          min-idle: 0
+
+logging:
+  level:
+    org.apache.shardingsphere: INFO
+    com.ourgroup.railway: DEBUG
+  file:
+    name: /app/logs/application.log

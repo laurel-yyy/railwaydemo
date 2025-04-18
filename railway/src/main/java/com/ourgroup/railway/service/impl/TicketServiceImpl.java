@@ -233,12 +233,18 @@ public class TicketServiceImpl implements TicketService{
             // 查询余票
             Object quantityObj = stringRedisTemplate.opsForHash().get(
                     RedisKeyConstant.TRAIN_STATION_REMAINING_TICKET + keySuffix, seatType);
-            
+            // 添加调试日志
+            log.info("Redis查询 Key: {}", RedisKeyConstant.TRAIN_STATION_REMAINING_TICKET + keySuffix);
+            log.info("Redis查询 Field: {}", seatType);
+            log.info("Redis查询结果 quantityObj: {}", quantityObj);
             // 解析余票数量
             int quantity = Optional.ofNullable(quantityObj)
                     .map(Object::toString)
                     .map(Integer::parseInt)
                     .orElseGet(() -> {
+                        // 添加日志，确认是否进入这个方法
+                        logger.info("进入 cacheLoader 加载方法");
+
                         // 缓存未命中，使用座位缓存加载器加载
                         Map<String, String> seatMarginMap = seatMarginCacheLoader.load(
                                 ticket.getTrainId(), 
