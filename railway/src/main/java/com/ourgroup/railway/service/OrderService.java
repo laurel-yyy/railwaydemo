@@ -13,7 +13,6 @@ import com.ourgroup.railway.framework.convention.page.PageResponse;
  * Order service interface
  */
 public interface OrderService {
-
     /**
      * Query ticket order by order number
      *
@@ -55,11 +54,11 @@ public interface OrderService {
      */
     boolean cancelTickOrder(ChangeTicketOrderReqDTO requestParam);
 
-    /**
-     * Query self ticket orders
-     *
-     * @param requestParam page query parameters
-     * @return paged self order details
-     */
-    PageResponse<TicketOrderDetailSelfRespDTO> pageSelfTicketOrder(TicketOrderSelfPageQueryReqDTO requestParam);
+    // /**
+    //  * Query self ticket orders
+    //  *
+    //  * @param requestParam page query parameters
+    //  * @return paged self order details
+    //  */
+    // PageResponse<TicketOrderDetailSelfRespDTO> pageSelfTicketOrder(TicketOrderSelfPageQueryReqDTO requestParam);
 }

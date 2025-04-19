@@ -15,10 +15,11 @@ docker-compose up -d
 # View logs
 docker-compose logs -f
 
-# Test Account
+# Access in local
+http://localhost/
 
-# Username: test_user
-# Password: password
+# Test Account
+Please register your own account 
 
 # Notes
 

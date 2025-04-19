@@ -15,7 +15,6 @@ import com.ourgroup.railway.model.dto.req.TicketOrderSelfPageQueryReqDTO;
 import com.ourgroup.railway.model.dto.resp.TicketOrderDetailRespDTO;
 import com.ourgroup.railway.model.dto.resp.TicketOrderDetailSelfRespDTO;
 import com.ourgroup.railway.model.dto.resp.TicketOrderPassengerDetailRespDTO;
-import com.ourgroup.railway.service.OrderItemService;
 import com.ourgroup.railway.service.OrderService;
 import com.ourgroup.railway.framework.convention.page.PageResponse;
 import com.ourgroup.railway.framework.result.Result;
@@ -31,15 +30,6 @@ import java.util.List;
 public class TicketOrderController {
 
     private final OrderService orderService;
-    private final OrderItemService orderItemService;
-
-    /**
-     * Query ticket order by order number
-     */
-    @GetMapping("/api/order-service/order/ticket/query")
-    public Result<TicketOrderDetailRespDTO> queryTicketOrderByOrderSn(@RequestParam(value = "orderSn") String orderSn) {
-        return Results.success(orderService.queryTicketOrderByOrderSn(orderSn));
-    }
 
     /**
      * Page query ticket orders
@@ -49,13 +39,6 @@ public class TicketOrderController {
         return Results.success(orderService.pageTicketOrder(requestParam));
     }
 
-    /**
-     * Page query current user's ticket orders
-     */
-    @GetMapping("/api/order-service/order/ticket/self/page")
-    public Result<PageResponse<TicketOrderDetailSelfRespDTO>> pageSelfTicketOrder(TicketOrderSelfPageQueryReqDTO requestParam) {
-        return Results.success(orderService.pageSelfTicketOrder(requestParam));
-    }
 
     /**
      * Create ticket order

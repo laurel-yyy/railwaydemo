@@ -23,10 +23,10 @@ public class UserLoginServiceImpl implements UserLoginService {
     @Autowired
     private UserMapper userMapper;
 
-    // 登录功能
+    // Login
     @Override
     public UserLoginRespDTO login(UserLoginReqDTO requestParam) {
-        // 查询数据库中的用户信息
+        // search user
         List<UserDO> users = userMapper.findByUsername(requestParam.getUsername());
     
         if (users == null || users.isEmpty()) {
@@ -35,7 +35,7 @@ public class UserLoginServiceImpl implements UserLoginService {
         
         UserDO userDO = users.get(0);
     
-        // 验证密码
+        // password
         if (!BCrypt.checkpw(requestParam.getPassword(), userDO.getPassword())) {
             throw new RuntimeException("账号或密码错误");
         }
@@ -66,12 +66,12 @@ public class UserLoginServiceImpl implements UserLoginService {
         newUser.setRealName(requestParam.getRealName());
 
         try {
-            userMapper.insert(newUser); // here the shardingsphere will use snowflake to produce id for user, and put it in sql
+            userMapper.insert(newUser);
         } catch (DuplicateKeyException e) {
             throw new RuntimeException("Register failed");
         }
 
-        // 返回注册响应
+        // return response
         return new UserRegisterRespDTO(newUser.getUsername(), newUser.getRealName());
     }
 }
