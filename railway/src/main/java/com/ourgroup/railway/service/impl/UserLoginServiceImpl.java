@@ -23,25 +23,30 @@ public class UserLoginServiceImpl implements UserLoginService {
     @Autowired
     private UserMapper userMapper;
 
+    // Login
     @Override
     public UserLoginRespDTO login(UserLoginReqDTO requestParam) {
+        // search user
         List<UserDO> users = userMapper.findByUsername(requestParam.getUsername());
     
         if (users == null || users.isEmpty()) {
-            throw new RuntimeException("password or username error");
+            throw new RuntimeException("账号或密码错误");
         }
         
         UserDO userDO = users.get(0);
     
+        // password
         if (!BCrypt.checkpw(requestParam.getPassword(), userDO.getPassword())) {
-            throw new RuntimeException("password or username error");
+            throw new RuntimeException("账号或密码错误");
         }
             
         String accessToken = JWTUtil.generateAccessToken(String.valueOf(userDO.getId()));
 
+        // 返回响应结果
         return new UserLoginRespDTO(userDO.getUsername(), userDO.getRealName(), accessToken);
     }
 
+    // Login Feature
     @Override
     public UserRegisterRespDTO register(UserRegisterReqDTO requestParam) {
         // check if the name already exists
@@ -53,6 +58,7 @@ public class UserLoginServiceImpl implements UserLoginService {
 
         String hashedPassword = BCrypt.hashpw(requestParam.getPassword(), BCrypt.gensalt(12));
 
+        // create new user
         UserDO newUser = new UserDO();
         newUser.setId(System.currentTimeMillis());
         newUser.setUsername(requestParam.getUsername());
@@ -60,11 +66,12 @@ public class UserLoginServiceImpl implements UserLoginService {
         newUser.setRealName(requestParam.getRealName());
 
         try {
-            userMapper.insert(newUser); 
+            userMapper.insert(newUser);
         } catch (DuplicateKeyException e) {
             throw new RuntimeException("Register failed");
         }
 
+        // return response
         return new UserRegisterRespDTO(newUser.getUsername(), newUser.getRealName());
     }
 }

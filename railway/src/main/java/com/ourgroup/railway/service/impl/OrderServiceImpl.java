@@ -32,6 +32,25 @@ import java.util.UUID;
 public class OrderServiceImpl implements OrderService {
 
     private final OrderMapper orderMapper;
+    private final HttpServletRequest request;
+
+    @Override
+    public TicketOrderDetailRespDTO queryTicketOrderByOrderSn(String orderSn) {
+        // Query order by order number
+        OrderDO orderDO = orderMapper.findByOrderSn(orderSn);
+        if (orderDO == null) {
+            return null;
+        }
+        
+        // Query order items
+        // List<OrderItemDO> orderItemList = orderItemMapper.findByOrderSn(orderSn);
+        
+        // Convert to response DTO
+        TicketOrderDetailRespDTO result = convertToOrderDetailDTO(orderDO);
+        // result.setPassengerDetails(convertToPassengerDetailList(orderItemList));
+        
+        return result;
+    }
 
     @Override
     public PageResponse<TicketOrderDetailRespDTO> pageTicketOrder(TicketOrderPageQueryReqDTO requestParam) {
