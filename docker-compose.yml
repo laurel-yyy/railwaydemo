@@ -7,7 +7,7 @@ services:
     container_name: railway-backend
     ports:
       - "8080:8080"
-      - "5005:5005"  # 添加调试端口
+      - "5005:5005" 
     depends_on:
       - mysql
       - redis
@@ -41,7 +41,7 @@ services:
     environment:
     - MYSQL_ROOT_PASSWORD=123456
     - MYSQL_DATABASE=railway
-    - MYSQL_ROOT_HOST=% # 添加这一行，允许外部访问
+    - MYSQL_ROOT_HOST=% 
     ports:
       - "3306:3306"
     volumes:
@@ -52,7 +52,7 @@ services:
     command: 
       - --character-set-server=utf8mb4 
       - --collation-server=utf8mb4_unicode_ci
-      - --authentication-policy=mysql_native_password # 添加这一行，兼容外部工具
+      - --authentication-policy=mysql_native_password 
 
   redis:
     image: redis:7.0

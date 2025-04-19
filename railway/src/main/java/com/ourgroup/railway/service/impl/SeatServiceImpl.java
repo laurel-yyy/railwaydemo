@@ -52,26 +52,22 @@ public class SeatServiceImpl implements SeatService {
     public List<Integer> listSeatRemainingTicket(String trainId, String departure, String arrival, List<String> trainCarriageList) {
         // String keySuffix = String.join("_", trainId, departure, arrival);
         // String redisKey = RedisKeyConstant.TRAIN_STATION_CARRIAGE_REMAINING_TICKET + keySuffix;
-        
-        // // 先尝试从缓存获取
+
         // if (distributedCache.hasKey(redisKey)) {
         //     StringRedisTemplate stringRedisTemplate = (StringRedisTemplate) distributedCache.getInstance();
         //     List<Object> trainStationCarriageRemainingTicket =
         //             stringRedisTemplate.opsForHash().multiGet(redisKey, Arrays.asList(trainCarriageList.toArray()));
         //     if (!CollectionUtils.isEmpty(trainStationCarriageRemainingTicket)) {
         //         return trainStationCarriageRemainingTicket.stream()
-        //                 .filter(each -> each != null)  // 添加null过滤
+        //                 .filter(each -> each != null) 
         //                 .map(each -> Integer.parseInt(each.toString()))
         //                 .collect(Collectors.toList());
         //     }
         // }
-        
-        // // 缓存中没有数据，需要从数据库查询
         // RLock lock = redissonClient.getLock(RedisKeyConstant.LOCK_TRAIN_STATION_CARRIAGE_REMAINING_TICKET + keySuffix);
         // lock.lock();
         
         // try {
-        //     // 双重检查，避免重复查询数据库
         //     if (distributedCache.hasKey(redisKey)) {
         //         StringRedisTemplate stringRedisTemplate = (StringRedisTemplate) distributedCache.getInstance();
         //         List<Object> trainStationCarriageRemainingTicket =
@@ -115,7 +111,6 @@ public class SeatServiceImpl implements SeatService {
                     .build();
             return seatMapper.listSeatRemainingTicket(seatDO, trainCarriageList);
         // } finally {
-        //     // 释放锁
         //     if (lock.isHeldByCurrentThread()) {
         //         lock.unlock();
         //     }
@@ -169,8 +164,7 @@ public class SeatServiceImpl implements SeatService {
                 batchUpdateList.add(seatDO);
             }
         }
-        
-        // 执行批量更新
+
         if (!batchUpdateList.isEmpty()) {
             seatMapper.batchUpdateSeatStatus(batchUpdateList);
         }

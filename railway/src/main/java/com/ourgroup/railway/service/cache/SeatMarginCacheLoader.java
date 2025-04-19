@@ -97,19 +97,13 @@ public class SeatMarginCacheLoader {
 
     private String selectSeatMargin(String trainId, Integer type, String departure, String arrival) {
 
-        // 执行查询前记录日志
-        log.info("执行SQL查询座位余量");
         Integer count = seatMapper.countAvailableSeats(
                 Long.parseLong(trainId), 
                 type, 
                 SeatStatusEnum.AVAILABLE.getCode(), 
                 departure, 
                 arrival);
-        log.info("SQL查询完成: count={}", count);
-        
-        // 在selectSeatMargin方法中添加
-        log.info("查询座位余量: trainId={}, type={}, departure={}, arrival={}, count={}", 
-        trainId, type, departure, arrival, count);
+
         
         return Optional.ofNullable(count)
                 .map(String::valueOf)
