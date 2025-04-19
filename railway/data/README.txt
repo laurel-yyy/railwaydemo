@@ -1,4 +1,0 @@
-导入顺序：
-createdb
-insertdata
-tseatconverted

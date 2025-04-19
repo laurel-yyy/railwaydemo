@@ -13,9 +13,7 @@ import com.ourgroup.railway.model.dto.req.TicketOrderPageQueryReqDTO;
 import com.ourgroup.railway.model.dto.req.TicketOrderSelfPageQueryReqDTO;
 import com.ourgroup.railway.model.dto.resp.TicketOrderDetailRespDTO;
 import com.ourgroup.railway.model.dto.resp.TicketOrderDetailSelfRespDTO;
-
 import com.ourgroup.railway.service.OrderService;
-import com.google.protobuf.ServiceException;
 import com.ourgroup.railway.framework.convention.page.PageResponse;
 import com.ourgroup.railway.framework.toolkit.JWTUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -56,8 +54,6 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public PageResponse<TicketOrderDetailRespDTO> pageTicketOrder(TicketOrderPageQueryReqDTO requestParam) {
-        // This would typically use pagination in a real implementation
-        // For simplicity, we'll just fetch all orders matching the criteria
         
         String authHeader = request.getHeader("Authorization");
         String userId1 = null;
@@ -133,7 +129,7 @@ public class OrderServiceImpl implements OrderService {
         orderDO.setStatus(2); // Closed
         orderDO.setUpdateTime(new Date());
         // Update order status
-        int updated = orderMapper.updateStatusByOrderSn(orderSn, 2); // 使用这个方法代替 update
+        int updated = orderMapper.updateStatusByOrderSn(orderSn, 2); 
         
         if (updated <= 0) {
             return false;
@@ -145,13 +141,11 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean cancelTickOrder(ChangeTicketOrderReqDTO requestParam) {
-        // The logic is similar to payTickOrder in this simplified implementation
         return payTickOrder(requestParam);
     }
 
     
     private String generateOrderSn() {
-        // In a real implementation, you would use a more sophisticated order number generation strategy
         return "RW" + System.currentTimeMillis() + UUID.randomUUID().toString().substring(0, 8);
     }
     

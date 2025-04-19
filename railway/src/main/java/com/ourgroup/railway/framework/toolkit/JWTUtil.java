@@ -9,7 +9,7 @@ import javax.crypto.SecretKey;
 public class JWTUtil {
     
     private static final String SECRET_KEY = "yourSecretKeyHereNeedsToBeAtLeast32BytesLong";
-    private static final long EXPIRATION_TIME = 86400000; // 24小时
+    private static final long EXPIRATION_TIME = 86400000;
     
     public static String generateAccessToken(String userId) {
         SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));

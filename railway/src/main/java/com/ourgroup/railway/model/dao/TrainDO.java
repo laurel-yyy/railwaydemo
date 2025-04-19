@@ -33,9 +33,6 @@ public class TrainDO extends BaseDO {
 
     private Date saleTime;
 
-    /**
-     * 销售状态 0：可售 1：不可售 2：未知
-     */
     private Integer saleStatus;
 
     private Date departureTime;
