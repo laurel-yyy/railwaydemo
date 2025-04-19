@@ -33,21 +33,6 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderMapper orderMapper;
 
-    private final HttpServletRequest request;
-
-    @Override
-    public TicketOrderDetailRespDTO queryTicketOrderByOrderSn(String orderSn) {
-
-        OrderDO orderDO = orderMapper.findByOrderSn(orderSn);
-        if (orderDO == null) {
-            return null;
-        }
-
-        TicketOrderDetailRespDTO result = convertToOrderDetailDTO(orderDO);
-        
-        return result;
-    }
-
     @Override
     public PageResponse<TicketOrderDetailRespDTO> pageTicketOrder(TicketOrderPageQueryReqDTO requestParam) {
         
@@ -130,7 +115,7 @@ public class OrderServiceImpl implements OrderService {
         if (updated <= 0) {
             return false;
         }
-        
+
         return true;
     }
 
@@ -140,13 +125,6 @@ public class OrderServiceImpl implements OrderService {
         return payTickOrder(requestParam);
     }
 
-    @Override
-    public PageResponse<TicketOrderDetailSelfRespDTO> pageSelfTicketOrder(TicketOrderSelfPageQueryReqDTO requestParam) {
-        
-        return PageResponse.empty();
-    }
-
-    // Utility methods
     
     private String generateOrderSn() {
         return "RW" + System.currentTimeMillis() + UUID.randomUUID().toString().substring(0, 8);
