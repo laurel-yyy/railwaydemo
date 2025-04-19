@@ -42,7 +42,6 @@ public class TicketController {
             TicketPurchaseRespDTO ticketPurchase = ticketService.purchaseTicket(requestParam);
             return Results.success(ticketPurchase);
         } catch (ServiceException e) {
-            // Handle the exception (e.g., log it or return an error response)
             return Results.failure("Error purchasing ticket: " + e.getMessage());
         }
     }

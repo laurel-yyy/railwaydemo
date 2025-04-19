@@ -23,30 +23,25 @@ public class UserLoginServiceImpl implements UserLoginService {
     @Autowired
     private UserMapper userMapper;
 
-    // 登录功能
     @Override
     public UserLoginRespDTO login(UserLoginReqDTO requestParam) {
-        // 查询数据库中的用户信息
         List<UserDO> users = userMapper.findByUsername(requestParam.getUsername());
     
         if (users == null || users.isEmpty()) {
-            throw new RuntimeException("账号或密码错误");
+            throw new RuntimeException("password or username error");
         }
         
         UserDO userDO = users.get(0);
     
-        // 验证密码
         if (!BCrypt.checkpw(requestParam.getPassword(), userDO.getPassword())) {
-            throw new RuntimeException("账号或密码错误");
+            throw new RuntimeException("password or username error");
         }
             
         String accessToken = JWTUtil.generateAccessToken(String.valueOf(userDO.getId()));
 
-        // 返回响应结果
         return new UserLoginRespDTO(userDO.getUsername(), userDO.getRealName(), accessToken);
     }
 
-    // Login Feature
     @Override
     public UserRegisterRespDTO register(UserRegisterReqDTO requestParam) {
         // check if the name already exists
@@ -58,7 +53,6 @@ public class UserLoginServiceImpl implements UserLoginService {
 
         String hashedPassword = BCrypt.hashpw(requestParam.getPassword(), BCrypt.gensalt(12));
 
-        // create new user
         UserDO newUser = new UserDO();
         newUser.setId(System.currentTimeMillis());
         newUser.setUsername(requestParam.getUsername());
@@ -66,12 +60,11 @@ public class UserLoginServiceImpl implements UserLoginService {
         newUser.setRealName(requestParam.getRealName());
 
         try {
-            userMapper.insert(newUser); // here the shardingsphere will use snowflake to produce id for user, and put it in sql
+            userMapper.insert(newUser); 
         } catch (DuplicateKeyException e) {
             throw new RuntimeException("Register failed");
         }
 
-        // 返回注册响应
         return new UserRegisterRespDTO(newUser.getUsername(), newUser.getRealName());
     }
 }

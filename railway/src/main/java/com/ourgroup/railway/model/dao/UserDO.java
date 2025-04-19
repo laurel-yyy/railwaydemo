@@ -1,15 +1,15 @@
 package com.ourgroup.railway.model.dao;
 
-import lombok.Data; // Lombok annotation to generate getters, setters, and other methods
+import lombok.Data; 
 
 @Data
 public class UserDO {
     
-    private Long id;          // Auto-increment ID
+    private Long id;       
 
-    private String username;  // Username
+    private String username;  
 
-    private String password;  // Password
+    private String password; 
 
-    private String realName;  // Real name
+    private String realName; 
 }

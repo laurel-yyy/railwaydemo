@@ -30,10 +30,7 @@ public class TrainStationRemainingTicketJobHandler {
     private final TrainStationRelationMapper trainStationRelationMapper;
     private final DistributedCache distributedCache;
 
-    /**
-     * Trigger manually via GET request.
-     * Example: http://localhost:8080/api/job/cache-init
-     */
+
     @GetMapping("/api/job/cache-init")
     public void initRemainingTicketsToRedis() {
         log.info("Start initializing remaining train tickets into Redis...");
@@ -49,7 +46,6 @@ public class TrainStationRemainingTicketJobHandler {
                 String departure = relation.getDeparture();
                 String arrival = relation.getArrival();
 
-                // Build default remaining tickets based on train type
                 Map<String, String> remainingTickets = new HashMap<>();
                 switch (train.getTrainType()) {
                     case 0 -> {

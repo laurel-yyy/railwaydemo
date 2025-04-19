@@ -1,13 +1,3 @@
--- 城市转换标准：
--- 北京南/北京 → New York
--- 济南西/德州 → Chicago
--- 南京南/南京 → San Francisco
--- 杭州东 → Boston
--- 杭州 → Los Angeles
--- 宁波 → Philadelphia
--- 嘉兴 → Washington D.C.
--- 海宁 → Denver
-
 INSERT INTO `t_station` (`id`, `code`, `name`, `popular_flag`, `create_time`, `update_time`, `del_flag`)
 VALUES (1, 'NYC', 'New York', 1, '2023-06-01 20:54:00', '2023-06-01 20:54:00', 0),
        (2, 'CHI', 'Chicago', 1, '2023-06-01 20:54:00', '2023-06-01 20:54:00', 0),

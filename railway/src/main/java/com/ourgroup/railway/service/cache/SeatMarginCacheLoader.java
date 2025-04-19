@@ -72,12 +72,14 @@ public class SeatMarginCacheLoader {
                         trainStationRemainingTicket.put("3", selectSeatMargin(trainId, 3, each.getStartStation(), each.getEndStation()));
                         trainStationRemainingTicket.put("4", selectSeatMargin(trainId, 4, each.getStartStation(), each.getEndStation()));
                         trainStationRemainingTicket.put("5", selectSeatMargin(trainId, 5, each.getStartStation(), each.getEndStation()));
+                        trainStationRemainingTicket.put("6", selectSeatMargin(trainId, 6, each.getStartStation(), each.getEndStation()));
+                        trainStationRemainingTicket.put("13", selectSeatMargin(trainId, 13, each.getStartStation(), each.getEndStation()));
                         String actualKeySuffix = CacheUtil.buildKey(trainId, each.getStartStation(), each.getEndStation());
                         trainStationRemainingTicketMaps.put(RedisKeyConstant.TRAIN_STATION_REMAINING_TICKET + actualKeySuffix, trainStationRemainingTicket);
                     }
                 } else {
                     Map<String, String> trainStationRemainingTicket = new LinkedHashMap<>();
-                    List<Integer> seatTypes = Arrays.asList(0, 1, 2, 3, 4, 5);
+                    List<Integer> seatTypes = Arrays.asList(0, 1, 2, 3, 4, 5, 6, 13);
                     seatTypes.forEach(stype -> 
                         trainStationRemainingTicket.put(String.valueOf(stype), "0")
                     );
@@ -95,19 +97,13 @@ public class SeatMarginCacheLoader {
 
     private String selectSeatMargin(String trainId, Integer type, String departure, String arrival) {
 
-        // 执行查询前记录日志
-        log.info("执行SQL查询座位余量");
         Integer count = seatMapper.countAvailableSeats(
                 Long.parseLong(trainId), 
                 type, 
                 SeatStatusEnum.AVAILABLE.getCode(), 
                 departure, 
                 arrival);
-        log.info("SQL查询完成: count={}", count);
-        
-        // 在selectSeatMargin方法中添加
-        log.info("查询座位余量: trainId={}, type={}, departure={}, arrival={}, count={}", 
-        trainId, type, departure, arrival, count);
+
         
         return Optional.ofNullable(count)
                 .map(String::valueOf)

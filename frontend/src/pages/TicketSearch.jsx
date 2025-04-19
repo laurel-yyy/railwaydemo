@@ -315,7 +315,7 @@ const TicketSearch = () => {
                                 <span className="text-sm text-gray-600 mr-3">
                                   {seat.quantity > 0 ? `${seat.quantity} tickets` : 'No tickets'}
                                 </span>
-                                <span className="text-sm font-medium text-orange-600 mr-3">¥{seat.price}</span>
+                                <span className="text-sm font-medium text-orange-600 mr-3">${seat.price}</span>
                                 {train.saleStatus === 1 && seat.quantity > 0 && (
                                   <button
                                     onClick={() => handlePurchase(train, seat)}
