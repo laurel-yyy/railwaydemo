@@ -6,20 +6,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ourgroup.railway.model.dao.OrderDO;
-import com.ourgroup.railway.model.dao.OrderItemDO;
-import com.ourgroup.railway.model.dao.OrderItemPassengerDO;
 import com.ourgroup.railway.mapper.OrderMapper;
-import com.ourgroup.railway.mapper.OrderItemMapper;
 import com.ourgroup.railway.model.dto.req.ChangeTicketOrderReqDTO;
 import com.ourgroup.railway.model.dto.req.TicketOrderCreateReqDTO;
-import com.ourgroup.railway.model.dto.req.TicketOrderItemCreateReqDTO;
 import com.ourgroup.railway.model.dto.req.TicketOrderPageQueryReqDTO;
 import com.ourgroup.railway.model.dto.req.TicketOrderSelfPageQueryReqDTO;
 import com.ourgroup.railway.model.dto.resp.TicketOrderDetailRespDTO;
 import com.ourgroup.railway.model.dto.resp.TicketOrderDetailSelfRespDTO;
-import com.ourgroup.railway.model.dto.resp.TicketOrderPassengerDetailRespDTO;
-import com.ourgroup.railway.service.OrderItemService;
-import com.ourgroup.railway.service.OrderPassengerRelationService;
+
 import com.ourgroup.railway.service.OrderService;
 import com.google.protobuf.ServiceException;
 import com.ourgroup.railway.framework.convention.page.PageResponse;
@@ -40,29 +34,8 @@ import java.util.UUID;
 public class OrderServiceImpl implements OrderService {
 
     private final OrderMapper orderMapper;
-    private final OrderItemMapper orderItemMapper;
-    private final OrderItemService orderItemService;
-    private final OrderPassengerRelationService orderPassengerRelationService;
-
     private final HttpServletRequest request;
 
-    @Override
-    public TicketOrderDetailRespDTO queryTicketOrderByOrderSn(String orderSn) {
-        // Query order by order number
-        OrderDO orderDO = orderMapper.findByOrderSn(orderSn);
-        if (orderDO == null) {
-            return null;
-        }
-        
-        // Query order items
-        // List<OrderItemDO> orderItemList = orderItemMapper.findByOrderSn(orderSn);
-        
-        // Convert to response DTO
-        TicketOrderDetailRespDTO result = convertToOrderDetailDTO(orderDO);
-        // result.setPassengerDetails(convertToPassengerDetailList(orderItemList));
-        
-        return result;
-    }
 
     @Override
     public PageResponse<TicketOrderDetailRespDTO> pageTicketOrder(TicketOrderPageQueryReqDTO requestParam) {
@@ -148,15 +121,7 @@ public class OrderServiceImpl implements OrderService {
         if (updated <= 0) {
             return false;
         }
-        
-        // Update order items status
-        // List<OrderItemDO> orderItems = orderItemMapper.findByOrderSn(orderSn);
-        // for (OrderItemDO orderItem : orderItems) {
-        //     orderItem.setStatus(2); // Closed
-        //     orderItem.setUpdateTime(new Date());
-        //     orderItemMapper.update(orderItem);
-        // }
-        
+
         return true;
     }
 
@@ -167,15 +132,6 @@ public class OrderServiceImpl implements OrderService {
         return payTickOrder(requestParam);
     }
 
-    @Override
-    public PageResponse<TicketOrderDetailSelfRespDTO> pageSelfTicketOrder(TicketOrderSelfPageQueryReqDTO requestParam) {
-        // In a real implementation, this would query orders for the current user
-        // For now, we'll just return an empty page
-        
-        return PageResponse.empty();
-    }
-
-    // Utility methods
     
     private String generateOrderSn() {
         // In a real implementation, you would use a more sophisticated order number generation strategy
